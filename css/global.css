@@ -1,0 +1,216 @@
+/* ======================================================================================================================
+   CAPA DE PRESENTACIÓN con el estilo global del programa
+   Aquí Las “variables” (--colorXD permiten cambiar colores en un solo lugar.
+   ===================================================================================================================== */
+
+:root {
+  /* Fondo general: azul muy oscuro, casi negro */
+  --colorFondo: #0d1118;
+  /* Tarjetas y cajas: un poco más claras que el fondo */
+  --colorSuperficie: #161d2a;
+  --colorSuperficieElevada: #1e2838;
+  /* Azules para textos de énfasis y bordes suaves */
+  --colorPrimario: #8ec5ff;
+  --colorPrimarioSuave: #5a8fc9;
+  --colorPrimarioOscuro: #1a3a5c;
+  /* Amarillo / dorado ligero (botones y hovers) */
+  --colorAcento: #e8c547;
+  --colorAcentoHover: #f0d56a;
+  --colorAcentoOscuro: #2a2310;
+  /* Texto principal y secundario */
+  --colorTexto: #e8edf4;
+  --colorTextoSuave: #9fb0c8;
+  --colorBorde: #2d3d52;
+  /* Mensajes */
+  --colorError: #ff8a80;
+  --colorErrorFondo: #3d1f1f;
+  --colorExito: #7dd87a;
+  --colorExitoFondo: #1a3320;
+  --sombraSuave: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --radioGrande: 14px;
+  --radioMedio: 10px;
+  --anchoContenido: min(1080px, 100% - 2rem);
+  --fuentePrincipal: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--fuentePrincipal);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--colorTexto);
+  background: var(--colorFondo);
+}
+
+/* Campos de formulario: mismo estilo base en toda la app */
+input,
+textarea,
+select {
+  color: var(--colorTexto);
+  background: var(--colorSuperficieElevada);
+  border-color: var(--colorBorde);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--colorPrimario);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--colorAcentoHover);
+}
+
+.enlace-sutil {
+  color: var(--colorTextoSuave);
+  font-size: 0.95rem;
+}
+
+/* Barra superior degradado azul con un toque cálido en el borde inferior */
+.cabecera-sitio {
+  background: linear-gradient(
+    160deg,
+    #0f1f35 0%,
+    var(--colorPrimarioOscuro) 45%,
+    #152a45 100%
+  );
+  color: #fff;
+  padding: 1.25rem 1rem;
+  box-shadow: var(--sombraSuave);
+  border-bottom: 1px solid rgba(232, 197, 71, 0.2);
+}
+
+.cabecera-sitio-interior {
+  width: var(--anchoContenido);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.marca-sitio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.marca-sitio-titulo {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+
+.marca-sitio-subtitulo {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.88;
+  color: var(--colorPrimario);
+}
+
+.pie-sitio {
+  margin-top: auto;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--colorTextoSuave);
+  border-top: 1px solid var(--colorBorde);
+  background: var(--colorSuperficie);
+}
+
+.layout-centrado {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-centrado main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* Botón principal amarillo dorado; texto oscuro para buen contraste */
+.boton-primario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: var(--radioMedio);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--colorAcento);
+  color: var(--colorAcentoOscuro);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.boton-primario:hover {
+  background: var(--colorAcentoHover);
+}
+
+.boton-primario:active {
+  transform: scale(0.98);
+}
+
+.boton-secundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid rgba(142, 197, 255, 0.35);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.boton-secundario:hover {
+  background: rgba(142, 197, 255, 0.12);
+  border-color: rgba(232, 197, 71, 0.45);
+}
+
+.barra-usuario-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.texto-usuario-activo {
+  opacity: 0.95;
+}
+
+.nav-cabecera-feed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}

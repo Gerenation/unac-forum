@@ -1,0 +1,82 @@
+/* ======================================================================================================================
+   FUNCIONALIDAD 4 - aqui va el formulario de nueva publicación
+   Seguimos el tema oscuro, aqui va el diseño pero para ver la 
+   lógica que es muy intersante, ve a formularioPost.js
+   ====================================================================================================================== */
+
+body > main {
+  padding-top: 1.5rem;
+}
+
+.contenedor-formulario-post {
+  width: min(640px, var(--anchoContenido));
+  margin: 0 auto;
+  padding: 0 0 3rem;
+}
+
+.formulario-crear-post {
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  border: 1px solid var(--colorBorde);
+  box-shadow: var(--sombraSuave);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.formulario-crear-post h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--colorPrimario);
+}
+
+.formulario-crear-post .texto-ayuda {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--colorTextoSuave);
+}
+
+.formulario-crear-post .campo-formulario textarea {
+  min-height: 160px;
+  resize: vertical;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.formulario-crear-post .campo-formulario textarea:focus {
+  outline: none;
+  border-color: var(--colorAcento);
+  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.15);
+}
+
+.formulario-crear-post .campo-formulario select {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  background: var(--colorSuperficieElevada);
+  cursor: pointer;
+}
+
+.formulario-crear-post .campo-formulario select:focus {
+  outline: none;
+  border-color: var(--colorPrimarioSuave);
+  box-shadow: 0 0 0 3px rgba(90, 143, 201, 0.2);
+}
+
+.hint-caracteres {
+  font-size: 0.8rem;
+  color: var(--colorTextoSuave);
+}
+
+.acciones-crear-post {
+  margin-top: 0.25rem;
+}
+
+.acciones-crear-post .boton-primario {
+  min-width: 180px;
+}

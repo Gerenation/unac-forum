@@ -1,0 +1,90 @@
+/* ======================================================================================================================
+   FUNCIONALIDAD 1 y 2 - Pantallas de login y registro
+   Heredan colores de global.css usamos tema oscuro.
+   ====================================================================================================================== */
+
+.tarjeta-auth {
+  width: min(420px, 100%);
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  padding: 2rem;
+  box-shadow: var(--sombraSuave);
+  border: 1px solid var(--colorBorde);
+}
+
+.tarjeta-auth-titulo {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  color: var(--colorPrimario);
+}
+
+.tarjeta-auth-descripcion {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: var(--colorTextoSuave);
+}
+
+.formulario-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campo-formulario label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--colorTexto);
+}
+
+.campo-formulario input {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campo-formulario input:focus {
+  outline: none;
+  border-color: var(--colorAcento);
+  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.2);
+}
+
+.acciones-formulario-auth {
+  margin-top: 0.5rem;
+}
+
+.acciones-formulario-auth .boton-primario {
+  width: 100%;
+}
+
+.enlaces-auth {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.mensaje-error,
+.mensaje-exito {
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radioMedio);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  background: var(--colorErrorFondo);
+  color: var(--colorError);
+  border: 1px solid rgba(255, 138, 128, 0.35);
+}
+
+.mensaje-exito {
+  background: var(--colorExitoFondo);
+  color: var(--colorExito);
+  border: 1px solid rgba(125, 216, 122, 0.35);
+}

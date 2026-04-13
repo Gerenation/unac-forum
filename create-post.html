@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UNAC Forum — Nueva publicación</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/formularioPost.css" />
+  </head>
+  <body>
+    <!-- FUNCIONALIDAD 4 - CREAR PUBLICACIÓN -->
+    <header class="cabecera-sitio">
+      <div class="cabecera-sitio-interior">
+        <div class="marca-sitio">
+          <h1 class="marca-sitio-titulo">UNAC Forum</h1>
+          <p class="marca-sitio-subtitulo">Nueva entrada en el tablón</p>
+        </div>
+        <div class="barra-usuario-cabecera">
+          <span class="texto-usuario-activo"
+            ><strong id="saludoUsuario"></strong></span
+          >
+          <nav class="nav-cabecera-feed" aria-label="Navegación">
+            <a class="boton-secundario" href="feed.html">Volver al foro</a>
+            <button type="button" id="enlaceCerrarSesion" class="boton-secundario">
+              Cerrar sesión
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div class="contenedor-formulario-post">
+        <form
+          id="formularioCrearPost"
+          class="formulario-crear-post"
+          method="post"
+        >
+          <h1>Nueva publicación</h1>
+          <p class="texto-ayuda">
+            Comparte convocatorias, eventos, alertas o temas de interés para la
+            comunidad estudiantil.
+          </p>
+          <div class="campo-formulario">
+            <label for="titulo">Título</label>
+            <input id="titulo" name="titulo" type="text" required />
+            <span class="hint-caracteres"
+              >Máximo 60 caracteres (incluidos espacios).</span
+            >
+          </div>
+          <div class="campo-formulario">
+            <label for="categoria">Categoría</label>
+            <select id="categoria" name="categoria" required>
+              <option value="" disabled selected>Selecciona una categoría</option>
+              <option value="convocatoria">Convocatoria</option>
+              <option value="evento">Evento</option>
+              <option value="alertaAcademica">Alerta académica</option>
+              <option value="bienestar">Bienestar</option>
+              <option value="tecnologia">Tecnología</option>
+              <option value="deportes">Deportes</option>
+              <option value="cultura">Cultura</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+          <div class="campo-formulario">
+            <label for="contenido">Descripción</label>
+            <textarea
+              id="contenido"
+              name="contenido"
+              required
+              placeholder="Detalle del anuncio o tema de interés…"
+            ></textarea>
+          </div>
+          <p id="mensajeFormularioPost" class="mensaje-error" hidden></p>
+          <div class="acciones-crear-post">
+            <button type="submit" class="boton-primario">Publicar en el foro</button>
+          </div>
+        </form>
+      </div>
+    </main>
+    <footer class="pie-sitio">
+      <p>Proyecto parcial - HTML, CSS y JavaScript.</p>
+    </footer>
+    <!-- datos.js primero; formularioPost.js envía el formulario de nueva entrada. -->
+    <script src="js/datos.js"></script>
+    <script src="js/formularioPost.js"></script>
+  </body>
+</html>

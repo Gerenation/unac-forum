@@ -1,0 +1,239 @@
+/* ======================================================================================================================
+   FUNCIONALIDAD 3 y 5 - acá va el Feed, tarjetas y botón de like 
+   Los “chips” de categoría usan fondos suaves azulados o medio amarillos.
+   ====================================================================================================================== */
+
+body > main {
+  padding-top: 1.5rem;
+}
+
+.barra-herramientas-feed {
+  width: var(--anchoContenido);
+  margin: 0 auto 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.grupo-busqueda {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grupo-busqueda label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--colorTextoSuave);
+}
+
+.grupo-busqueda input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+}
+
+.grupo-busqueda input:focus {
+  outline: none;
+  border-color: var(--colorPrimarioSuave);
+  box-shadow: 0 0 0 3px rgba(90, 143, 201, 0.25);
+}
+
+.grupo-filtro-categoria {
+  flex: 0 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grupo-filtro-categoria label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--colorTextoSuave);
+}
+
+.grupo-filtro-categoria select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  background: var(--colorSuperficieElevada);
+  cursor: pointer;
+}
+
+.contenedor-feed-principal {
+  width: var(--anchoContenido);
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+
+.contenedor-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.feed-vacio {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  border: 1px dashed var(--colorBorde);
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post {
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  border: 1px solid var(--colorBorde);
+  box-shadow: var(--sombraSuave);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tarjeta-post-encabezado {
+  padding: 1.25rem 1.25rem 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.5rem 1rem;
+  align-items: start;
+}
+
+.tarjeta-post-titulo {
+  margin: 0;
+  grid-column: 1 / -1;
+  font-size: 1.2rem;
+  color: var(--colorPrimario);
+  line-height: 1.35;
+}
+
+.tarjeta-post-meta {
+  grid-column: 1 / 2;
+  font-size: 0.88rem;
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post-separador {
+  margin: 0 0.35rem;
+}
+
+.chip-categoria {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  justify-self: end;
+  align-self: start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(142, 197, 255, 0.12);
+  color: var(--colorPrimario);
+}
+
+/* Variantes por categoría: tonos azulados y un toque cálido donde encaja */
+.chip-categoria-convocatoria {
+  background: rgba(100, 180, 255, 0.18);
+  color: #9fd4ff;
+}
+
+.chip-categoria-evento {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.chip-categoria-alertaAcademica {
+  background: rgba(255, 160, 100, 0.14);
+  color: #ffb89a;
+}
+
+.chip-categoria-bienestar {
+  background: rgba(125, 216, 122, 0.14);
+  color: var(--colorExito);
+}
+
+.chip-categoria-tecnologia {
+  background: rgba(120, 170, 255, 0.18);
+  color: #a8c4ff;
+}
+
+.chip-categoria-deportes {
+  background: rgba(255, 120, 120, 0.14);
+  color: #ff9e9e;
+}
+
+.chip-categoria-cultura {
+  background: rgba(200, 150, 255, 0.14);
+  color: #d4b8ff;
+}
+
+.chip-categoria-general {
+  background: rgba(232, 237, 244, 0.08);
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post-cuerpo {
+  padding: 0 1.25rem 1rem;
+  font-size: 0.98rem;
+  color: var(--colorTexto);
+}
+
+.tarjeta-post-cuerpo p {
+  margin: 0 0 0.65rem;
+}
+
+.tarjeta-post-cuerpo p:last-child {
+  margin-bottom: 0;
+}
+
+.tarjeta-post-sin-texto {
+  font-style: italic;
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post-pie {
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--colorBorde);
+  background: rgba(22, 29, 42, 0.85);
+}
+
+.boton-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTextoSuave);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.boton-like:hover {
+  border-color: var(--colorPrimarioSuave);
+  color: var(--colorPrimario);
+}
+
+.boton-like-activo {
+  border-color: #ff7b9c;
+  color: #ff8fab;
+  background: rgba(255, 80, 120, 0.12);
+}
+
+.boton-like-activo .boton-like-icono {
+  color: #ff8fab;
+}
+
+.boton-like-icono {
+  font-size: 1rem;
+  line-height: 1;
+}

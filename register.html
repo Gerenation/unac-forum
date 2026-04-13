@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UNAC Forum - Registro</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body class="layout-centrado">
+    <!-- FUNCIONALIDAD 2 - REGISTRO DE USUARIO -->
+    <header class="cabecera-sitio">
+      <div class="cabecera-sitio-interior">
+        <div class="marca-sitio">
+          <h1 class="marca-sitio-titulo">UNAC Forum</h1>
+          <p class="marca-sitio-subtitulo">
+            Foro de anuncios y temas de interés universitario
+          </p>
+        </div>
+      </div>
+    </header>
+    <main>
+      <section class="tarjeta-auth" aria-labelledby="tituloRegistro">
+        <h2 id="tituloRegistro" class="tarjeta-auth-titulo">Crear cuenta</h2>
+        <p class="tarjeta-auth-descripcion">
+          Registro simulado: tu usuario se usa en esta sesión del navegador.
+        </p>
+        <form id="formularioRegistro" class="formulario-auth" method="post">
+          <div class="campo-formulario">
+            <label for="nombreCompleto">Nombre completo</label>
+            <input
+              id="nombreCompleto"
+              name="nombreCompleto"
+              type="text"
+              autocomplete="name"
+              required
+            />
+          </div>
+          <div class="campo-formulario">
+            <label for="nombreUsuario">Nombre de usuario</label>
+            <input
+              id="nombreUsuario"
+              name="nombreUsuario"
+              type="text"
+              autocomplete="nickname"
+              required
+            />
+          </div>
+          <div class="campo-formulario">
+            <label for="correo">Correo</label>
+            <input
+              id="correo"
+              name="correo"
+              type="email"
+              autocomplete="email"
+              required
+            />
+          </div>
+          <div class="campo-formulario">
+            <label for="contrasena">Contraseña</label>
+            <input
+              id="contrasena"
+              name="contrasena"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <div class="campo-formulario">
+            <label for="contrasenaConfirmacion">Confirmar contraseña</label>
+            <input
+              id="contrasenaConfirmacion"
+              name="contrasenaConfirmacion"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <p id="mensajeAuth" class="mensaje-error" hidden></p>
+          <div class="acciones-formulario-auth">
+            <button type="submit" class="boton-primario">Registrarme</button>
+          </div>
+        </form>
+        <p class="enlaces-auth">
+          ¿Ya tienes cuenta?
+          <a href="index.html">Iniciar sesión</a>
+        </p>
+      </section>
+    </main>
+    <footer class="pie-sitio">
+      <p>Proyecto parcial - HTML, CSS y JavaScript</p>
+    </footer>
+    <!-- Mismo orden que index: datos.js y luego auth.js (comparten archivo). -->
+    <script src="js/datos.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>

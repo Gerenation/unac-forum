@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UNAC Forum - Iniciar sesión</title>
+    <link rel="stylesheet" href="css/global.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+  </head>
+  <body class="layout-centrado">
+    <!-- FUNCIONALIDAD 1 - INICIO DE SESIÓN -->
+    <header class="cabecera-sitio">
+      <div class="cabecera-sitio-interior">
+        <div class="marca-sitio">
+          <h1 class="marca-sitio-titulo">UNAC Forum</h1>
+          <p class="marca-sitio-subtitulo">
+            Foro de anuncios y temas de interés universitario
+          </p>
+        </div>
+      </div>
+    </header>
+    <main>
+      <section class="tarjeta-auth" aria-labelledby="tituloLogin">
+        <h2 id="tituloLogin" class="tarjeta-auth-titulo">Iniciar sesión</h2>
+        <p class="tarjeta-auth-descripcion">
+          Accede con tu correo institucional (simulación con usuarios de
+          prueba). Ejemplo: <span class="enlace-sutil">pepito.perez@estudiantes.unac.edu</span>
+          / <span class="enlace-sutil">demo123</span>
+        </p>
+        <form id="formularioLogin" class="formulario-auth" method="post">
+          <div class="campo-formulario">
+            <label for="correo">Correo</label>
+            <input
+              id="correo"
+              name="correo"
+              type="email"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="campo-formulario">
+            <label for="contrasena">Contraseña</label>
+            <input
+              id="contrasena"
+              name="contrasena"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <p id="mensajeAuth" class="mensaje-error" hidden></p>
+          <div class="acciones-formulario-auth">
+            <button type="submit" class="boton-primario">Entrar al foro</button>
+          </div>
+        </form>
+        <p class="enlaces-auth">
+          ¿No tienes cuenta?
+          <a href="register.html">Crear cuenta</a>
+        </p>
+      </section>
+    </main>
+    <footer class="pie-sitio">
+      <p>Proyecto parcial - HTML, CSS y JavaScript</p>
+    </footer>
+    <!-- Orden: primero datos (usuarios y posts), después auth (login/registro). -->
+    <script src="js/datos.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>
