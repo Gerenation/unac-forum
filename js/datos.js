@@ -65,6 +65,17 @@ const PUBLICACIONES_INICIALES = [
     fechaIso: "2026-04-03T10:30:00.000Z",
     idsUsuariosQueDieronLike: [],
   },
+  {
+    idPublicacion: "pub-003",
+    titulo: "Sale parche al cerro de las 3 cruces",
+    contenido:
+      "el domingo 19 de abril cupos limitados (habrá comida)",
+    categoria: "socialización",
+    idAutor: "usr-003",
+    nombreAutor: "Mr WorldWide",
+    fechaIso: "2026-04-04T10:30:00.000Z",
+    idsUsuariosQueDieronLike: [],
+  },
 ];
 
 /** Primera línea del guardado: sirve para saber si el texto es nuestro formato. */
@@ -76,6 +87,22 @@ const SEP = "###";
 let listaUsuarios = [];
 let listaPublicaciones = [];
 let usuarioActivo = null;
+
+function inicializarDatosCompartidos() {
+  const huboGuardado = cargarEstadoDesdeSesionVentana();
+  
+  // Verificamos si agregaste nuevos dummies al código que no están en la "memoria"
+  const faltanUsuarios = listaUsuarios.length < USUARIOS_DUMMY.length;
+  const faltanPublicaciones = listaPublicaciones.length < PUBLICACIONES_INICIALES.length;
+
+  // Si no había guardado, vino corrupto, O si agregaste nuevos dummies en el código:
+  if (!huboGuardado || listaUsuarios.length === 0 || faltanUsuarios || faltanPublicaciones) {
+    copiarUsuariosDesdeDummy();
+    copiarPublicacionesDesdeIniciales();
+    usuarioActivo = null; // Cierra la sesión temporalmente para aplicar los datos limpios
+    guardarEstadoEnSesionVentana();
+  }
+}
 
 /**
  * Llena listaUsuarios copiando los usuarios de prueba (objetos nuevos, no la misma referencia).
