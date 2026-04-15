@@ -1,9 +1,7 @@
-# UNAC Forum
+# Parcial Programación Web - HTML, CSS y JavaScript - UNAC Forum
 
 ## Descripción
 UNAC Forum es un foro web estático desarrollado con HTML, CSS y JavaScript puro para la universidad UNAC. Permite a los estudiantes publicar anuncios, eventos y temas de interés, con funcionalidades de autenticación simulada, feed de publicaciones, búsqueda/filtros, likes y creación de posts. Todo se ejecuta en el navegador sin backend (datos simulados en JS + localStorage/sesión).
-
-**Parcial Programación Web - HTML, CSS y JavaScript.**
 
 ## Características
 - **Autenticación**: Login y registro de usuarios (simulado con datos locales).
