@@ -3,7 +3,7 @@
 ## Descripción
 UNAC Forum es un foro web estático desarrollado con HTML, CSS y JavaScript puro para la universidad UNAC. Permite a los estudiantes publicar anuncios, eventos y temas de interés, con funcionalidades de autenticación simulada, feed de publicaciones, búsqueda/filtros, likes y creación de posts. Todo se ejecuta en el navegador sin backend (datos simulados en JS + localStorage/sesión).
 
-**Proyecto parcial - HTML, CSS y JavaScript.**
+**Parcial Programación Web - HTML, CSS y JavaScript.**
 
 ## Características
 - **Autenticación**: Login y registro de usuarios (simulado con datos locales).
@@ -70,6 +70,6 @@ unac-forum/
 ## Notas de desarrollo
 - **Flujo**: Login → Feed → Crear post / like / search.
 - **Persistencia**: Datos en memoria (recarga página reinicia), usuario en localStorage.
-- **Mejoras posibles**: Backend real (Node/Express + DB), PWA para offline.
+- **Mejoras posibles**: Backend real (Node + DB).
 - **Testing**: Abre en navegador, prueba login demo, crea post, busca "evento".
 
