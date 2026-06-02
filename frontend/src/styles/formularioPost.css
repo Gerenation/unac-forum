@@ -5,13 +5,14 @@
    ====================================================================================================================== */
 
 body > main {
-  padding-top: 1.5rem;
+  padding-top: 2.5rem;
+  padding-bottom: 2rem;
 }
 
 .contenedor-formulario-post {
   width: min(640px, var(--anchoContenido));
   margin: 0 auto;
-  padding: 0 0 3rem;
+  padding: 0 0 4rem;
 }
 
 .formulario-crear-post {
