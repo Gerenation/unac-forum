@@ -55,6 +55,30 @@ const publicacionSchema = new mongoose.Schema(
         ref: 'Usuario',
         default: []
       }
+    ],
+    comentarios: [
+      {
+        idAutor: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Usuario',
+          required: true
+        },
+        nombreAutor: {
+          type: String,
+          required: true,
+          trim: true
+        },
+        texto: {
+          type: String,
+          required: [true, 'El texto del comentario es obligatorio'],
+          trim: true,
+          maxlength: [500, 'El comentario no puede superar 500 caracteres']
+        },
+        fechaIso: {
+          type: Date,
+          default: Date.now
+        }
+      }
     ]
   },
   { timestamps: true }

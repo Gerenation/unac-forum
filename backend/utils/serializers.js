@@ -15,6 +15,12 @@ function publicacionPublico(doc, usuarioId) {
     ? likesIds.includes(String(usuarioId))
     : false;
   const fecha = doc.fechaIso instanceof Date ? doc.fechaIso.toISOString() : doc.fechaIso;
+  const comentarios = (doc.comentarios || []).map((c) => ({
+    idAutor: String(c.idAutor),
+    nombreAutor: c.nombreAutor,
+    texto: c.texto,
+    fechaIso: c.fechaIso instanceof Date ? c.fechaIso.toISOString() : c.fechaIso
+  }));
   return {
     id: String(doc._id),
     titulo: doc.titulo,
@@ -25,7 +31,9 @@ function publicacionPublico(doc, usuarioId) {
     fechaIso: fecha,
     likes: likesIds,
     cantidadLikes: likesIds.length,
-    usuarioYaDioLike
+    usuarioYaDioLike,
+    comentarios,
+    cantidadComentarios: comentarios.length
   };
 }
 

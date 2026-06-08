@@ -1,17 +1,72 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import Message from '../components/ui/Message';
 import { useAuth } from '../context/AuthContext';
 import {
   listarPublicaciones,
-  toggleLike as svcToggleLike
+  toggleLike as svcToggleLike,
+  eliminarPublicacion,
+  agregarComentario as svcAgregarComentario
 } from '../services/publicacionService';
 import { CATEGORIAS_DISPONIBLES, etiquetaCategoria, formatearFechaLegible } from '../constants/categorias';
 
-function PostCard({ publicacion, onToggleLike }) {
+const MAX_LONGITUD_COMENTARIO = 500;
+
+function PostCard({
+  publicacion,
+  esAutor,
+  expandido,
+  onToggleExpandido,
+  onToggleLike,
+  onEliminar,
+  onAgregarComentario
+}) {
+  const [textoComentario, setTextoComentario] = useState('');
+  const [errorComentario, setErrorComentario] = useState('');
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+
   const lineas = (publicacion.contenido || '').split('\n');
   const parrafos = lineas.filter((l) => l !== '');
+
+  function manejarEliminar() {
+    const confirmado = window.confirm(
+      `¿Eliminar la publicación "${publicacion.titulo}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) return;
+    setEliminando(true);
+    onEliminar(publicacion.id).finally(() => setEliminando(false));
+  }
+
+  async function manejarEnvioComentario(e) {
+    e.preventDefault();
+    setErrorComentario('');
+    const limpio = textoComentario.trim();
+    if (!limpio) {
+      setErrorComentario('Escribe un comentario antes de publicar.');
+      return;
+    }
+    if (limpio.length > MAX_LONGITUD_COMENTARIO) {
+      setErrorComentario(
+        `El comentario no puede superar ${MAX_LONGITUD_COMENTARIO} caracteres.`
+      );
+      return;
+    }
+    setEnviandoComentario(true);
+    try {
+      await onAgregarComentario(publicacion.id, limpio);
+      setTextoComentario('');
+    } catch (err) {
+      const mensaje =
+        err.response?.data?.mensaje || 'No se pudo publicar el comentario.';
+      setErrorComentario(mensaje);
+    } finally {
+      setEnviandoComentario(false);
+    }
+  }
+
   return (
     <article className="tarjeta-post" data-id-publicacion={publicacion.id}>
       <header className="tarjeta-post-encabezado">
@@ -23,9 +78,22 @@ function PostCard({ publicacion, onToggleLike }) {
             {formatearFechaLegible(publicacion.fechaIso)}
           </time>
         </div>
-        <span className={`chip-categoria chip-categoria-${publicacion.categoria}`}>
-          {etiquetaCategoria(publicacion.categoria)}
-        </span>
+        <div className="tarjeta-post-acciones-autor">
+          {esAutor && (
+            <button
+              type="button"
+              className="boton-eliminar"
+              onClick={manejarEliminar}
+              disabled={eliminando}
+              aria-label="Eliminar publicación"
+            >
+              {eliminando ? 'Eliminando…' : 'Eliminar'}
+            </button>
+          )}
+          <span className={`chip-categoria chip-categoria-${publicacion.categoria}`}>
+            {etiquetaCategoria(publicacion.categoria)}
+          </span>
+        </div>
       </header>
       <div className="tarjeta-post-cuerpo">
         {parrafos.length === 0 ? (
@@ -35,18 +103,77 @@ function PostCard({ publicacion, onToggleLike }) {
         )}
       </div>
       <footer className="tarjeta-post-pie">
-        <button
-          type="button"
-          className={`boton-like${publicacion.usuarioYaDioLike ? ' boton-like-activo' : ''}`}
-          data-id-publicacion={publicacion.id}
-          aria-pressed={publicacion.usuarioYaDioLike ? 'true' : 'false'}
-          aria-label={publicacion.usuarioYaDioLike ? 'Quitar me gusta' : 'Dar me gusta'}
-          onClick={() => onToggleLike(publicacion.id)}
-        >
-          <span className="boton-like-icono" aria-hidden="true">♥</span>
-          <span className="boton-like-contador">{publicacion.cantidadLikes}</span>
-        </button>
+        <div className="tarjeta-post-pie-acciones">
+          <button
+            type="button"
+            className={`boton-like${publicacion.usuarioYaDioLike ? ' boton-like-activo' : ''}`}
+            data-id-publicacion={publicacion.id}
+            aria-pressed={publicacion.usuarioYaDioLike ? 'true' : 'false'}
+            aria-label={publicacion.usuarioYaDioLike ? 'Quitar me gusta' : 'Dar me gusta'}
+            onClick={() => onToggleLike(publicacion.id)}
+          >
+            <span className="boton-like-icono" aria-hidden="true">♥</span>
+            <span className="boton-like-contador">{publicacion.cantidadLikes}</span>
+          </button>
+          <button
+            type="button"
+            className={`boton-toggle-comentarios${expandido ? ' boton-toggle-comentarios-activo' : ''}`}
+            onClick={() => onToggleExpandido(publicacion.id)}
+            aria-expanded={expandido}
+            aria-controls={`comentarios-${publicacion.id}`}
+          >
+            <span aria-hidden="true">💬</span>
+            <span>
+              {publicacion.cantidadComentarios > 0
+                ? `Comentarios (${publicacion.cantidadComentarios})`
+                : 'Comentar'}
+            </span>
+          </button>
+        </div>
       </footer>
+      {expandido && (
+        <section
+          id={`comentarios-${publicacion.id}`}
+          className="seccion-comentarios"
+        >
+          <h3>Comentarios</h3>
+          {publicacion.comentarios && publicacion.comentarios.length > 0 ? (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {publicacion.comentarios.map((c, idx) => (
+                <li key={idx} className="comentario-item">
+                  <span className="comentario-autor">{c.nombreAutor}</span>
+                  <span className="comentario-meta">
+                    {formatearFechaLegible(c.fechaIso)}
+                  </span>
+                  <p className="comentario-texto">{c.texto}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="comentarios-vacio">Sé el primero en comentar.</p>
+          )}
+          <form className="formulario-comentario" onSubmit={manejarEnvioComentario}>
+            <textarea
+              value={textoComentario}
+              onChange={(e) => setTextoComentario(e.target.value)}
+              maxLength={MAX_LONGITUD_COMENTARIO}
+              placeholder="Escribe tu comentario…"
+              aria-label="Escribe tu comentario"
+              disabled={enviandoComentario}
+            />
+            {errorComentario && (
+              <p className="mensaje-comentario-error">{errorComentario}</p>
+            )}
+            <button
+              type="submit"
+              className="boton-primario"
+              disabled={enviandoComentario}
+            >
+              {enviandoComentario ? 'Publicando…' : 'Publicar comentario'}
+            </button>
+          </form>
+        </section>
+      )}
     </article>
   );
 }
@@ -58,6 +185,7 @@ export default function Feed() {
   const [error, setError] = useState('');
   const [q, setQ] = useState('');
   const [categoria, setCategoria] = useState('todas');
+  const [idExpandido, setIdExpandido] = useState(null);
 
   async function cargar(filtros) {
     setCargando(true);
@@ -86,8 +214,41 @@ export default function Feed() {
     } catch (err) {
       if (err.response?.status === 401) {
         logout();
+      } else {
+        toast.error(err.response?.data?.mensaje || 'No se pudo actualizar el like.');
       }
     }
+  }
+
+  async function manejarEliminar(id) {
+    try {
+      await eliminarPublicacion(id);
+      setPublicaciones((prev) => {
+        const siguiente = prev.filter((p) => p.id !== id);
+        if (idExpandido === id) setIdExpandido(null);
+        return siguiente;
+      });
+      toast.success('Publicación eliminada.');
+    } catch (err) {
+      if (err.response?.status === 401) {
+        logout();
+      } else {
+        toast.error(err.response?.data?.mensaje || 'No se pudo eliminar la publicación.');
+      }
+      throw err;
+    }
+  }
+
+  async function manejarAgregarComentario(id, texto) {
+    const actualizada = await svcAgregarComentario(id, texto);
+    setPublicaciones((prev) =>
+      prev.map((p) => (p.id === actualizada.id ? actualizada : p))
+    );
+    toast.success('Comentario publicado.');
+  }
+
+  function alternarExpandido(id) {
+    setIdExpandido((actual) => (actual === id ? null : id));
   }
 
   return (
@@ -140,16 +301,30 @@ export default function Feed() {
           </div>
         </div>
         <div className="contenedor-feed-principal">
-          <p
-            id="textoFeedVacio"
-            className="feed-vacio"
-            hidden={publicaciones.length > 0 || cargando}
-          >
-            No hay publicaciones que coincidan con tu búsqueda o categoría.
-          </p>
+          <Message texto={error} error />
+          {cargando && publicaciones.length === 0 ? (
+            <p className="feed-vacio">Cargando publicaciones…</p>
+          ) : (
+            <p
+              id="textoFeedVacio"
+              className="feed-vacio"
+              hidden={publicaciones.length > 0 || cargando}
+            >
+              No hay publicaciones que coincidan con tu búsqueda o categoría.
+            </p>
+          )}
           <div id="contenedorFeed" className="contenedor-feed">
             {publicaciones.map((p) => (
-              <PostCard key={p.id} publicacion={p} onToggleLike={manejarLike} />
+              <PostCard
+                key={p.id}
+                publicacion={p}
+                esAutor={usuario ? p.idAutor === usuario.id : false}
+                expandido={idExpandido === p.id}
+                onToggleExpandido={alternarExpandido}
+                onToggleLike={manejarLike}
+                onEliminar={manejarEliminar}
+                onAgregarComentario={manejarAgregarComentario}
+              />
             ))}
           </div>
         </div>
