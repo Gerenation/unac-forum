@@ -259,6 +259,12 @@ export default function Feed() {
         navLinks={[
           {
             kind: 'link',
+            to: '/perfil',
+            label: 'Mi perfil',
+            className: 'boton-secundario'
+          },
+          {
+            kind: 'link',
             to: '/nueva-publicacion',
             label: 'Nueva publicación',
             className: 'boton-primario'

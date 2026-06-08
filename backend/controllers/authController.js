@@ -89,8 +89,96 @@ async function obtenerPerfil(req, res) {
   return res.json({ usuario: usuarioPublico(req.usuario) });
 }
 
+async function actualizarPerfil(req, res) {
+  try {
+    const {
+      nombreCompleto,
+      nombreUsuario,
+      correo,
+      contrasenaActual,
+      contrasenaNueva
+    } = req.body || {};
+
+    let doc = req.usuario;
+    let requiereGuardar = false;
+
+    if (contrasenaNueva !== undefined && String(contrasenaNueva).length > 0) {
+      if (!contrasenaActual) {
+        return res.status(400).json({ mensaje: 'Debes proporcionar la contraseña actual' });
+      }
+      if (String(contrasenaNueva).length < 6) {
+        return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres' });
+      }
+      doc = await Usuario.findById(req.usuario._id).select('+contrasena');
+      const coincide = await doc.compararContrasena(String(contrasenaActual));
+      if (!coincide) {
+        return res.status(401).json({ mensaje: 'Contraseña actual incorrecta' });
+      }
+      doc.contrasena = String(contrasenaNueva);
+      requiereGuardar = true;
+    }
+
+    if (nombreCompleto !== undefined && String(nombreCompleto).trim() !== req.usuario.nombreCompleto) {
+      const limpio = String(nombreCompleto).trim();
+      if (limpio.length < 2) {
+        return res.status(400).json({ mensaje: 'El nombre debe tener al menos 2 caracteres' });
+      }
+      doc.nombreCompleto = limpio;
+      requiereGuardar = true;
+    }
+
+    if (nombreUsuario !== undefined && String(nombreUsuario).trim() !== req.usuario.nombreUsuario) {
+      const limpio = String(nombreUsuario).trim();
+      if (limpio.length < 2) {
+        return res.status(400).json({ mensaje: 'El nombre de usuario debe tener al menos 2 caracteres' });
+      }
+      const usuarioExistente = await Usuario.findOne({
+        _id: { $ne: doc._id },
+        nombreUsuario: new RegExp(`^${escapeRegex(limpio)}$`, 'i')
+      });
+      if (usuarioExistente) {
+        return res.status(400).json({ mensaje: 'Ya existe un usuario con ese nombre de usuario' });
+      }
+      doc.nombreUsuario = limpio;
+      requiereGuardar = true;
+    }
+
+    if (correo !== undefined && String(correo).toLowerCase() !== req.usuario.correo) {
+      const limpio = String(correo).toLowerCase();
+      if (!/^\S+@\S+\.\S+$/.test(limpio)) {
+        return res.status(400).json({ mensaje: 'Correo inválido' });
+      }
+      const usuarioExistente = await Usuario.findOne({
+        _id: { $ne: doc._id },
+        correo: limpio
+      });
+      if (usuarioExistente) {
+        return res.status(400).json({ mensaje: 'Ya existe un usuario con ese correo' });
+      }
+      doc.correo = limpio;
+      requiereGuardar = true;
+    }
+
+    if (!requiereGuardar) {
+      return res.status(400).json({ mensaje: 'No hay cambios para guardar' });
+    }
+
+    await doc.save();
+    return res.json({ usuario: usuarioPublico(doc) });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ mensaje: 'Ya existe un usuario con ese correo o nombre de usuario' });
+    }
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ mensaje: error.message });
+    }
+    console.error('Error en actualizarPerfil:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
 function escapeRegex(texto) {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-module.exports = { registrar, login, obtenerPerfil };
+module.exports = { registrar, login, obtenerPerfil, actualizarPerfil };
