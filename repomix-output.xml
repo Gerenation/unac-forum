@@ -1,0 +1,2979 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+backend/.env.example
+backend/.gitignore
+backend/app.js
+backend/config/database.js
+backend/controllers/authController.js
+backend/controllers/publicacionController.js
+backend/middleware/auth.js
+backend/models/Publicacion.js
+backend/models/Usuario.js
+backend/package.json
+backend/routes/authRoutes.js
+backend/routes/publicacionRoutes.js
+backend/server.js
+backend/services/seedService.js
+backend/utils/seedData.js
+backend/utils/serializers.js
+frontend/.gitignore
+frontend/index.html
+frontend/package.json
+frontend/src/app/App.jsx
+frontend/src/components/auth/ProtectedRoute.jsx
+frontend/src/components/layout/Footer.jsx
+frontend/src/components/layout/Header.jsx
+frontend/src/components/ui/Field.jsx
+frontend/src/components/ui/Message.jsx
+frontend/src/constants/categorias.js
+frontend/src/context/AuthContext.jsx
+frontend/src/main.jsx
+frontend/src/pages/Feed.jsx
+frontend/src/pages/Login.jsx
+frontend/src/pages/NuevaPublicacion.jsx
+frontend/src/pages/Registro.jsx
+frontend/src/services/api.js
+frontend/src/services/authService.js
+frontend/src/services/publicacionService.js
+frontend/src/styles/auth.css
+frontend/src/styles/feed.css
+frontend/src/styles/formularioPost.css
+frontend/src/styles/global.css
+frontend/vite.config.js
+readme.md
+run_project.bat
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+node_modules
+*.log
+.DS_Store
+</file>
+
+<file path="backend/.env.example">
+# Puerto HTTP (debe coincidir con el proxy del frontend)
+PORT=5001
+
+# MongoDB
+MONGODB_URI=mongodb://127.0.0.1:27017/unac_forum
+
+# JWT
+JWT_SECRET=cadena_larga_y_secreta_cambia_esto_en_produccion
+</file>
+
+<file path="backend/.gitignore">
+node_modules
+.env
+*.log
+</file>
+
+<file path="backend/app.js">
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');
+const publicacionRoutes = require('./routes/publicacionRoutes');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json({ limit: '8mb' }));
+app.use(express.urlencoded({ extended: true, limit: '8mb' }));
+
+app.get('/', (req, res) => {
+  res.json({ mensaje: 'API de UNAC Forum funcionando correctamente', version: '1.0.0' });
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api/publicaciones', publicacionRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ mensaje: 'Ruta no encontrada' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    mensaje: 'Error interno del servidor',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Error desconocido'
+  });
+});
+
+module.exports = app;
+</file>
+
+<file path="backend/config/database.js">
+const mongoose = require('mongoose');
+
+const DEFAULT_URI = 'mongodb://127.0.0.1:27017/unac_forum';
+
+function obtenerUriPorDefecto() {
+  if (process.env.MONGODB_URI && process.env.MONGODB_URI.trim() !== '') {
+    return process.env.MONGODB_URI;
+  }
+  return DEFAULT_URI;
+}
+
+async function conectarDB() {
+  const uri = obtenerUriPorDefecto();
+  try {
+    await mongoose.connect(uri);
+    console.log(`✅ MongoDB conectado: ${uri}`);
+  } catch (error) {
+    console.error('❌ Error al conectar con MongoDB:', error.message);
+    throw error;
+  }
+}
+
+module.exports = { conectarDB, obtenerUriPorDefecto };
+</file>
+
+<file path="backend/controllers/authController.js">
+const jwt = require('jsonwebtoken');
+const Usuario = require('../models/Usuario');
+const { usuarioPublico } = require('../utils/serializers');
+
+function firmarToken(usuarioId) {
+  return jwt.sign({ id: String(usuarioId) }, process.env.JWT_SECRET, {
+    expiresIn: '30d'
+  });
+}
+
+async function registrar(req, res) {
+  try {
+    const { nombreCompleto, nombreUsuario, correo, contrasena } = req.body || {};
+
+    if (!nombreCompleto || !nombreUsuario || !correo || !contrasena) {
+      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
+    }
+    if (String(contrasena).length < 6) {
+      return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    const usuarioExistente = await Usuario.findOne({
+      $or: [
+        { correo: String(correo).toLowerCase() },
+        { nombreUsuario: new RegExp(`^${escapeRegex(String(nombreUsuario))}$`, 'i') }
+      ]
+    });
+    if (usuarioExistente) {
+      const campo = usuarioExistente.correo === String(correo).toLowerCase() ? 'correo' : 'nombre de usuario';
+      return res.status(400).json({ mensaje: `Ya existe un usuario con ese ${campo}` });
+    }
+
+    const nuevoUsuario = await Usuario.create({
+      nombreCompleto,
+      nombreUsuario,
+      correo,
+      contrasena
+    });
+
+    const token = firmarToken(nuevoUsuario._id);
+    return res.status(201).json({
+      token,
+      usuario: usuarioPublico(nuevoUsuario)
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ mensaje: 'Ya existe un usuario con ese correo o nombre de usuario' });
+    }
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ mensaje: error.message });
+    }
+    console.error('Error en registrar:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+async function login(req, res) {
+  try {
+    const { correo, contrasena } = req.body || {};
+    if (!correo || !contrasena) {
+      return res.status(400).json({ mensaje: 'Correo y contraseña son obligatorios' });
+    }
+
+    const usuario = await Usuario.findOne({
+      correo: new RegExp(`^${escapeRegex(String(correo))}$`, 'i')
+    }).select('+contrasena');
+
+    if (!usuario) {
+      return res.status(401).json({ mensaje: 'Credenciales inválidas' });
+    }
+
+    const coincide = await usuario.compararContrasena(String(contrasena));
+    if (!coincide) {
+      return res.status(401).json({ mensaje: 'Credenciales inválidas' });
+    }
+
+    const token = firmarToken(usuario._id);
+    return res.json({
+      token,
+      usuario: usuarioPublico(usuario)
+    });
+  } catch (error) {
+    console.error('Error en login:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+async function obtenerPerfil(req, res) {
+  return res.json({ usuario: usuarioPublico(req.usuario) });
+}
+
+function escapeRegex(texto) {
+  return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+module.exports = { registrar, login, obtenerPerfil };
+</file>
+
+<file path="backend/controllers/publicacionController.js">
+const Publicacion = require('../models/Publicacion');
+const { LONGITUD_MAXIMA_TITULO } = require('../utils/seedData');
+const { publicacionPublico } = require('../utils/serializers');
+const { CATEGORIAS } = require('../models/Publicacion');
+
+function escapeRegex(texto) {
+  return String(texto).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function listar(req, res) {
+  try {
+    const q = (req.query.q || '').toString().trim();
+    const categoria = (req.query.categoria || 'todas').toString();
+
+    const filtro = {};
+    if (categoria && categoria !== 'todas') {
+      filtro.categoria = categoria;
+    }
+    if (q) {
+      const patron = new RegExp(escapeRegex(q), 'i');
+      filtro.$or = [{ titulo: patron }, { contenido: patron }, { nombreAutor: patron }];
+    }
+
+    const publicaciones = await Publicacion.find(filtro).sort({ fechaIso: -1 });
+    const datos = publicaciones.map((p) => publicacionPublico(p, req.usuario._id));
+    return res.json({ publicaciones: datos });
+  } catch (error) {
+    console.error('Error en listar:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+async function crear(req, res) {
+  try {
+    const { titulo, contenido, categoria } = req.body || {};
+
+    if (!titulo || !String(titulo).trim()) {
+      return res.status(400).json({ mensaje: 'El título es obligatorio' });
+    }
+    if (!contenido || !String(contenido).trim()) {
+      return res.status(400).json({ mensaje: 'El contenido es obligatorio' });
+    }
+    if (!categoria || !CATEGORIAS.includes(categoria)) {
+      return res.status(400).json({ mensaje: 'Categoría inválida' });
+    }
+    if (String(titulo).trim().length > LONGITUD_MAXIMA_TITULO) {
+      return res.status(400).json({
+        mensaje: `El título no puede superar ${LONGITUD_MAXIMA_TITULO} caracteres`
+      });
+    }
+
+    const nueva = await Publicacion.create({
+      titulo: String(titulo).trim(),
+      contenido: String(contenido).trim(),
+      categoria,
+      idAutor: req.usuario._id,
+      nombreAutor: req.usuario.nombreCompleto,
+      fechaIso: new Date(),
+      idsUsuariosQueDieronLike: []
+    });
+
+    return res.status(201).json({ publicacion: publicacionPublico(nueva, req.usuario._id) });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ mensaje: error.message });
+    }
+    console.error('Error en crear:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+async function toggleLike(req, res) {
+  try {
+    const { id } = req.params;
+    const usuarioId = req.usuario._id;
+
+    const publicacion = await Publicacion.findById(id);
+    if (!publicacion) {
+      return res.status(404).json({ mensaje: 'Publicación no encontrada' });
+    }
+
+    const yaDioLike = publicacion.idsUsuariosQueDieronLike.some(
+      (uid) => String(uid) === String(usuarioId)
+    );
+
+    let actualizada;
+    if (yaDioLike) {
+      actualizada = await Publicacion.findByIdAndUpdate(
+        id,
+        { $pull: { idsUsuariosQueDieronLike: usuarioId } },
+        { new: true }
+      );
+    } else {
+      actualizada = await Publicacion.findByIdAndUpdate(
+        id,
+        { $addToSet: { idsUsuariosQueDieronLike: usuarioId } },
+        { new: true }
+      );
+    }
+
+    return res.json({ publicacion: publicacionPublico(actualizada, usuarioId) });
+  } catch (error) {
+    console.error('Error en toggleLike:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+module.exports = { listar, crear, toggleLike };
+</file>
+
+<file path="backend/middleware/auth.js">
+const jwt = require('jsonwebtoken');
+const Usuario = require('../models/Usuario');
+
+async function autenticar(req, res, next) {
+  try {
+    const encabezado = req.headers.authorization || '';
+    const token = encabezado.startsWith('Bearer ') ? encabezado.slice(7) : null;
+    if (!token) {
+      return res.status(401).json({ mensaje: 'No autenticado: token ausente' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const usuario = await Usuario.findById(decoded.id).select('-contrasena');
+    if (!usuario) {
+      return res.status(401).json({ mensaje: 'Token inválido: usuario no existe' });
+    }
+
+    req.usuario = usuario;
+    next();
+  } catch (error) {
+    return res.status(401).json({ mensaje: 'Token inválido o expirado' });
+  }
+}
+
+module.exports = { autenticar };
+</file>
+
+<file path="backend/models/Publicacion.js">
+const mongoose = require('mongoose');
+
+const CATEGORIAS = [
+  'convocatoria',
+  'evento',
+  'alertaAcademica',
+  'bienestar',
+  'tecnologia',
+  'deportes',
+  'cultura',
+  'general',
+  'socializacion'
+];
+
+const publicacionSchema = new mongoose.Schema(
+  {
+    titulo: {
+      type: String,
+      required: [true, 'El título es obligatorio'],
+      trim: true,
+      minlength: [1, 'El título no puede estar vacío'],
+      maxlength: [60, 'El título no puede superar 60 caracteres']
+    },
+    contenido: {
+      type: String,
+      required: [true, 'El contenido es obligatorio'],
+      trim: true
+    },
+    categoria: {
+      type: String,
+      required: [true, 'La categoría es obligatoria'],
+      enum: {
+        values: CATEGORIAS,
+        message: 'Categoría inválida'
+      },
+      default: 'general'
+    },
+    idAutor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: true
+    },
+    nombreAutor: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    fechaIso: {
+      type: Date,
+      default: Date.now
+    },
+    idsUsuariosQueDieronLike: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario',
+        default: []
+      }
+    ]
+  },
+  { timestamps: true }
+);
+
+publicacionSchema.set('toJSON', { getters: true });
+publicacionSchema.path('fechaIso').get(function (valor) {
+  return valor instanceof Date ? valor.toISOString() : valor;
+});
+
+module.exports = mongoose.model('Publicacion', publicacionSchema);
+module.exports.CATEGORIAS = CATEGORIAS;
+</file>
+
+<file path="backend/models/Usuario.js">
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const usuarioSchema = new mongoose.Schema(
+  {
+    nombreCompleto: {
+      type: String,
+      required: [true, 'El nombre completo es obligatorio'],
+      trim: true,
+      minlength: [2, 'El nombre debe tener al menos 2 caracteres']
+    },
+    nombreUsuario: {
+      type: String,
+      required: [true, 'El nombre de usuario es obligatorio'],
+      trim: true,
+      minlength: [2, 'El nombre de usuario debe tener al menos 2 caracteres']
+    },
+    correo: {
+      type: String,
+      required: [true, 'El correo es obligatorio'],
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Correo inválido']
+    },
+    contrasena: {
+      type: String,
+      required: [true, 'La contraseña es obligatoria'],
+      minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
+      select: false
+    }
+  },
+  { timestamps: true }
+);
+
+usuarioSchema.index(
+  { nombreUsuario: 1 },
+  { collation: { locale: 'es', strength: 2 } }
+);
+usuarioSchema.index(
+  { correo: 1 },
+  { collation: { locale: 'es', strength: 2 } }
+);
+
+usuarioSchema.pre('save', async function (siguiente) {
+  if (!this.isModified('contrasena')) return siguiente();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.contrasena = await bcrypt.hash(this.contrasena, salt);
+    siguiente();
+  } catch (error) {
+    siguiente(error);
+  }
+});
+
+usuarioSchema.methods.compararContrasena = async function (contrasenaPlana) {
+  return bcrypt.compare(contrasenaPlana, this.contrasena);
+};
+
+module.exports = mongoose.model('Usuario', usuarioSchema);
+</file>
+
+<file path="backend/package.json">
+{
+  "name": "unac-forum-backend",
+  "version": "1.0.0",
+  "description": "Backend para UNAC Forum - API REST con Express y MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
+</file>
+
+<file path="backend/routes/authRoutes.js">
+const express = require('express');
+const router = express.Router();
+const { autenticar } = require('../middleware/auth');
+const { registrar, login, obtenerPerfil } = require('../controllers/authController');
+
+router.post('/registro', registrar);
+router.post('/login', login);
+router.get('/perfil', autenticar, obtenerPerfil);
+
+module.exports = router;
+</file>
+
+<file path="backend/routes/publicacionRoutes.js">
+const express = require('express');
+const router = express.Router();
+const { autenticar } = require('../middleware/auth');
+const { listar, crear, toggleLike } = require('../controllers/publicacionController');
+
+router.use(autenticar);
+
+router.get('/', listar);
+router.post('/', crear);
+router.post('/:id/like', toggleLike);
+
+module.exports = router;
+</file>
+
+<file path="backend/server.js">
+require('dotenv').config();
+
+const { conectarDB } = require('./config/database');
+const { sembrarSiVacio } = require('./services/seedService');
+const app = require('./app');
+
+(async function iniciar() {
+  try {
+    await conectarDB();
+    await sembrarSiVacio();
+  } catch (error) {
+    console.error('❌ No se pudo inicializar la base de datos:', error.message);
+    process.exit(1);
+  }
+
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor UNAC Forum corriendo en el puerto ${PORT}`);
+  });
+})();
+</file>
+
+<file path="backend/services/seedService.js">
+const Usuario = require('../models/Usuario');
+const Publicacion = require('../models/Publicacion');
+const {
+  USUARIOS_DUMMY,
+  PUBLICACIONES_INICIALES
+} = require('../utils/seedData');
+
+async function sembrarSiVacio() {
+  const totalUsuarios = await Usuario.countDocuments();
+  const totalPublicaciones = await Publicacion.countDocuments();
+
+  if (totalUsuarios > 0 && totalPublicaciones > 0) {
+    console.log(
+      `ℹ️  Seed omitido: ya hay ${totalUsuarios} usuarios y ${totalPublicaciones} publicaciones.`
+    );
+    return;
+  }
+
+  let usuariosCreados = [];
+  if (totalUsuarios === 0) {
+    // Use .create() one at a time so the pre('save') bcrypt hook fires
+    for (const datos of USUARIOS_DUMMY) {
+      const u = await Usuario.create(datos);
+      usuariosCreados.push(u);
+    }
+    console.log(`🌱 Usuarios demo insertados: ${usuariosCreados.length}`);
+  } else {
+    usuariosCreados = await Usuario.find();
+  }
+
+  if (totalPublicaciones === 0 && usuariosCreados.length > 0) {
+    const docs = PUBLICACIONES_INICIALES.map((p) => {
+      const autor = usuariosCreados[p.autorIndice] || usuariosCreados[0];
+      return {
+        titulo: p.titulo,
+        contenido: p.contenido,
+        categoria: p.categoria,
+        idAutor: autor._id,
+        nombreAutor: p.nombreAutor,
+        fechaIso: p.fechaIso,
+        idsUsuariosQueDieronLike: (p.likesIndice || []).map(
+          (idx) => usuariosCreados[idx]?._id
+        ).filter(Boolean)
+      };
+    });
+    const publicacionesCreadas = await Publicacion.insertMany(docs);
+    console.log(`🌱 Publicaciones demo insertadas: ${publicacionesCreadas.length}`);
+  }
+}
+
+module.exports = { sembrarSiVacio };
+</file>
+
+<file path="backend/utils/seedData.js">
+/**
+ * Datos de ejemplo para sembrar la base de datos la primera vez.
+ * Mantiene la misma información que tenía la versión vanilla del foro.
+ */
+
+const LONGITUD_MAXIMA_TITULO = 60;
+
+const CATEGORIAS_DISPONIBLES = [
+  'convocatoria',
+  'evento',
+  'alertaAcademica',
+  'bienestar',
+  'tecnologia',
+  'deportes',
+  'cultura',
+  'general',
+  'socializacion'
+];
+
+const USUARIOS_DUMMY = [
+  {
+    nombreUsuario: 'pepitoPerez',
+    correo: 'pepito.perez@estudiantes.unac.edu',
+    contrasena: 'demo123',
+    nombreCompleto: 'Pepito Pérez'
+  },
+  {
+    nombreUsuario: 'ThefulanoDeTal',
+    correo: 'fulano.de.tal@estudiantes.unac.edu',
+    contrasena: 'demo123',
+    nombreCompleto: 'Fulano de Tal'
+  }
+];
+
+const PUBLICACIONES_INICIALES = [
+  {
+    titulo: 'Club de lectura: ciencia ficción latinoamericana',
+    contenido:
+      'Se abre inscripción para el círculo de lectura del mes. Nos reunimos los viernes en la biblioteca central. Cupos limitados.',
+    categoria: 'cultura',
+    autorIndice: 0,
+    nombreAutor: 'Pepito Pérez',
+    fechaIso: new Date('2026-04-01T15:00:00.000Z'),
+    likesIndice: [1]
+  },
+  {
+    titulo: 'Taller de bienestar emocional (gratuito)',
+    contenido:
+      'La psicología estudiantil ofrece cuatro sesiones sobre manejo del estrés en parciales. Inscripción en ventanilla 3.',
+    categoria: 'bienestar',
+    autorIndice: 1,
+    nombreAutor: 'Fulano de Tal',
+    fechaIso: new Date('2026-04-03T10:30:00.000Z'),
+    likesIndice: []
+  },
+  {
+    titulo: 'Sale parche al cerro de las 3 cruces',
+    contenido: 'el domingo 19 de abril cupos limitados (habrá comida)',
+    categoria: 'socializacion',
+    autorIndice: 0,
+    nombreAutor: 'Pepito Pérez',
+    fechaIso: new Date('2026-04-04T10:30:00.000Z'),
+    likesIndice: []
+  }
+];
+
+module.exports = {
+  LONGITUD_MAXIMA_TITULO,
+  CATEGORIAS_DISPONIBLES,
+  USUARIOS_DUMMY,
+  PUBLICACIONES_INICIALES
+};
+</file>
+
+<file path="backend/utils/serializers.js">
+function usuarioPublico(doc) {
+  if (!doc) return null;
+  return {
+    id: String(doc._id),
+    nombreCompleto: doc.nombreCompleto,
+    nombreUsuario: doc.nombreUsuario,
+    correo: doc.correo
+  };
+}
+
+function publicacionPublico(doc, usuarioId) {
+  if (!doc) return null;
+  const likesIds = (doc.idsUsuariosQueDieronLike || []).map((id) => String(id));
+  const usuarioYaDioLike = usuarioId
+    ? likesIds.includes(String(usuarioId))
+    : false;
+  const fecha = doc.fechaIso instanceof Date ? doc.fechaIso.toISOString() : doc.fechaIso;
+  return {
+    id: String(doc._id),
+    titulo: doc.titulo,
+    contenido: doc.contenido,
+    categoria: doc.categoria,
+    idAutor: String(doc.idAutor),
+    nombreAutor: doc.nombreAutor,
+    fechaIso: fecha,
+    likes: likesIds,
+    cantidadLikes: likesIds.length,
+    usuarioYaDioLike
+  };
+}
+
+module.exports = { usuarioPublico, publicacionPublico };
+</file>
+
+<file path="frontend/.gitignore">
+node_modules
+dist
+*.log
+</file>
+
+<file path="frontend/index.html">
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UNAC Forum</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "unac-forum-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^0.395.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^6.20.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.8"
+  }
+}
+</file>
+
+<file path="frontend/src/app/App.jsx">
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from '../context/AuthContext';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
+import Login from '../pages/Login';
+import Registro from '../pages/Registro';
+import Feed from '../pages/Feed';
+import NuevaPublicacion from '../pages/NuevaPublicacion';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#161d2a',
+              color: '#e8edf4',
+              border: '1px solid #2d3d52'
+            }
+          }}
+        />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
+          <Route
+            path="/explorar"
+            element={
+              <ProtectedRoute>
+                <Feed />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/nueva-publicacion"
+            element={
+              <ProtectedRoute>
+                <NuevaPublicacion />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+</file>
+
+<file path="frontend/src/components/auth/ProtectedRoute.jsx">
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
+export default function ProtectedRoute({ children }) {
+  const { estaAutenticado, cargando } = useAuth();
+
+  if (cargando) {
+    return null;
+  }
+  if (!estaAutenticado) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+</file>
+
+<file path="frontend/src/components/layout/Footer.jsx">
+export default function Footer() {
+  return (
+    <footer className="pie-sitio">
+      <p>Proyecto parcial - HTML, CSS y JavaScript.</p>
+    </footer>
+  );
+}
+</file>
+
+<file path="frontend/src/components/layout/Header.jsx">
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
+export default function Header({ subtitulo, navLinks = [], navLabel = 'Navegación' }) {
+  const { usuario, logout } = useAuth();
+  return (
+    <header className="cabecera-sitio">
+      <div className="cabecera-sitio-interior">
+        <div className="marca-sitio">
+          <h1 className="marca-sitio-titulo">UNAC Forum</h1>
+          <p className="marca-sitio-subtitulo">{subtitulo}</p>
+        </div>
+        <div className="barra-usuario-cabecera">
+          {subtitulo === 'Tablón de anuncios y temas de interés' ? (
+            <span className="texto-usuario-activo">
+              Hola, <strong>{usuario?.nombreCompleto}</strong>
+            </span>
+          ) : (
+            <span className="texto-usuario-activo">
+              <strong>{usuario?.nombreCompleto}</strong>
+            </span>
+          )}
+          <nav className="nav-cabecera-feed" aria-label={navLabel}>
+            {navLinks.map((link, idx) =>
+              link.kind === 'button' ? (
+                <button
+                  key={idx}
+                  type="button"
+                  className={link.className || 'boton-secundario'}
+                  onClick={link.onClick || logout}
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={idx}
+                  to={link.to}
+                  className={link.className || 'boton-primario'}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
+            <button
+              type="button"
+              className="boton-secundario"
+              onClick={logout}
+            >
+              Cerrar sesión
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+}
+</file>
+
+<file path="frontend/src/components/ui/Field.jsx">
+export default function Field({ id, label, children }) {
+  return (
+    <div className="campo-formulario">
+      <label htmlFor={id}>{label}</label>
+      {children}
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/components/ui/Message.jsx">
+export default function Message({ texto, error = false, exito = false }) {
+  if (!texto) return null;
+  const clase = error ? 'mensaje-error' : 'mensaje-exito';
+  return <p className={clase}>{texto}</p>;
+}
+</file>
+
+<file path="frontend/src/constants/categorias.js">
+export const LONGITUD_MAXIMA_TITULO = 60;
+
+export const CATEGORIAS_DISPONIBLES = [
+  'convocatoria',
+  'evento',
+  'alertaAcademica',
+  'bienestar',
+  'tecnologia',
+  'deportes',
+  'cultura',
+  'general',
+  'socializacion'
+];
+
+const ETIQUETAS = {
+  convocatoria: 'Convocatoria',
+  evento: 'Evento',
+  alertaAcademica: 'Alerta académica',
+  bienestar: 'Bienestar',
+  tecnologia: 'Tecnología',
+  deportes: 'Deportes',
+  cultura: 'Cultura',
+  general: 'General',
+  socializacion: 'Socialización'
+};
+
+export function etiquetaCategoria(categoria) {
+  if (!categoria) return '';
+  return ETIQUETAS[categoria] || categoria;
+}
+
+export function formatearFechaLegible(fechaIso) {
+  if (!fechaIso) return '';
+  const fecha = new Date(fechaIso);
+  if (Number.isNaN(fecha.getTime())) return '';
+  return fecha.toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+}
+</file>
+
+<file path="frontend/src/context/AuthContext.jsx">
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  registrarUsuario as svcRegistrar,
+  loginUsuario as svcLogin,
+  obtenerPerfil as svcPerfil
+} from '../services/authService';
+
+const AuthContext = createContext(null);
+
+const CLAVE_TOKEN = 'unac_forum_token';
+const CLAVE_USUARIO = 'unac_forum_usuario';
+
+export function AuthProvider({ children }) {
+  const [usuario, setUsuario] = useState(() => {
+    try {
+      const texto = localStorage.getItem(CLAVE_USUARIO);
+      return texto ? JSON.parse(texto) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    let activo = true;
+    async function inicializar() {
+      const token = localStorage.getItem(CLAVE_TOKEN);
+      if (!token) {
+        if (activo) setCargando(false);
+        return;
+      }
+      try {
+        const data = await svcPerfil();
+        if (activo) {
+          setUsuario(data.usuario);
+          localStorage.setItem(CLAVE_USUARIO, JSON.stringify(data.usuario));
+        }
+      } catch {
+        if (activo) {
+          localStorage.removeItem(CLAVE_TOKEN);
+          localStorage.removeItem(CLAVE_USUARIO);
+          setUsuario(null);
+        }
+      } finally {
+        if (activo) setCargando(false);
+      }
+    }
+    inicializar();
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  async function login(correo, contrasena) {
+    const data = await svcLogin({ correo, contrasena });
+    localStorage.setItem(CLAVE_TOKEN, data.token);
+    localStorage.setItem(CLAVE_USUARIO, JSON.stringify(data.usuario));
+    setUsuario(data.usuario);
+    return data.usuario;
+  }
+
+  async function registro(datos) {
+    const data = await svcRegistrar(datos);
+    localStorage.setItem(CLAVE_TOKEN, data.token);
+    localStorage.setItem(CLAVE_USUARIO, JSON.stringify(data.usuario));
+    setUsuario(data.usuario);
+    return data.usuario;
+  }
+
+  function logout() {
+    localStorage.removeItem(CLAVE_TOKEN);
+    localStorage.removeItem(CLAVE_USUARIO);
+    setUsuario(null);
+  }
+
+  const value = useMemo(
+    () => ({
+      usuario,
+      cargando,
+      estaAutenticado: !!usuario,
+      login,
+      registro,
+      logout
+    }),
+    [usuario, cargando]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const contexto = useContext(AuthContext);
+  if (!contexto) {
+    throw new Error('useAuth debe usarse dentro de <AuthProvider>');
+  }
+  return contexto;
+}
+</file>
+
+<file path="frontend/src/main.jsx">
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './app/App.jsx';
+
+import './styles/global.css';
+import './styles/auth.css';
+import './styles/feed.css';
+import './styles/formularioPost.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+</file>
+
+<file path="frontend/src/pages/Feed.jsx">
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
+import { useAuth } from '../context/AuthContext';
+import {
+  listarPublicaciones,
+  toggleLike as svcToggleLike
+} from '../services/publicacionService';
+import { CATEGORIAS_DISPONIBLES, etiquetaCategoria, formatearFechaLegible } from '../constants/categorias';
+
+function PostCard({ publicacion, onToggleLike }) {
+  const lineas = (publicacion.contenido || '').split('\n');
+  const parrafos = lineas.filter((l) => l !== '');
+  return (
+    <article className="tarjeta-post" data-id-publicacion={publicacion.id}>
+      <header className="tarjeta-post-encabezado">
+        <h2 className="tarjeta-post-titulo">{publicacion.titulo}</h2>
+        <div className="tarjeta-post-meta">
+          <span className="tarjeta-post-autor">{publicacion.nombreAutor}</span>
+          <span className="tarjeta-post-separador">·</span>
+          <time className="tarjeta-post-fecha" dateTime={publicacion.fechaIso}>
+            {formatearFechaLegible(publicacion.fechaIso)}
+          </time>
+        </div>
+        <span className={`chip-categoria chip-categoria-${publicacion.categoria}`}>
+          {etiquetaCategoria(publicacion.categoria)}
+        </span>
+      </header>
+      <div className="tarjeta-post-cuerpo">
+        {parrafos.length === 0 ? (
+          <p className="tarjeta-post-sin-texto">(Sin descripción)</p>
+        ) : (
+          parrafos.map((linea, idx) => <p key={idx}>{linea}</p>)
+        )}
+      </div>
+      <footer className="tarjeta-post-pie">
+        <button
+          type="button"
+          className={`boton-like${publicacion.usuarioYaDioLike ? ' boton-like-activo' : ''}`}
+          data-id-publicacion={publicacion.id}
+          aria-pressed={publicacion.usuarioYaDioLike ? 'true' : 'false'}
+          aria-label={publicacion.usuarioYaDioLike ? 'Quitar me gusta' : 'Dar me gusta'}
+          onClick={() => onToggleLike(publicacion.id)}
+        >
+          <span className="boton-like-icono" aria-hidden="true">♥</span>
+          <span className="boton-like-contador">{publicacion.cantidadLikes}</span>
+        </button>
+      </footer>
+    </article>
+  );
+}
+
+export default function Feed() {
+  const { usuario, logout } = useAuth();
+  const [publicaciones, setPublicaciones] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
+  const [q, setQ] = useState('');
+  const [categoria, setCategoria] = useState('todas');
+
+  async function cargar(filtros) {
+    setCargando(true);
+    setError('');
+    try {
+      const datos = await listarPublicaciones(filtros);
+      setPublicaciones(datos);
+    } catch (err) {
+      setError(err.response?.data?.mensaje || 'No se pudo cargar el feed.');
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  useEffect(() => {
+    cargar({ q, categoria });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, categoria]);
+
+  async function manejarLike(id) {
+    try {
+      const actualizada = await svcToggleLike(id);
+      setPublicaciones((prev) =>
+        prev.map((p) => (p.id === actualizada.id ? actualizada : p))
+      );
+    } catch (err) {
+      if (err.response?.status === 401) {
+        logout();
+      }
+    }
+  }
+
+  return (
+    <>
+      <Header
+        subtitulo="Tablón de anuncios y temas de interés"
+        navLabel="Acciones del foro"
+        navLinks={[
+          {
+            kind: 'link',
+            to: '/nueva-publicacion',
+            label: 'Nueva publicación',
+            className: 'boton-primario'
+          }
+        ]}
+      />
+      <main>
+        <div
+          className="barra-herramientas-feed"
+          role="search"
+          aria-label="Buscar y filtrar publicaciones"
+        >
+          <div className="grupo-busqueda">
+            <label htmlFor="inputBuscador">Buscar</label>
+            <input
+              id="inputBuscador"
+              name="inputBuscador"
+              type="search"
+              placeholder="Título, texto o autor…"
+              autoComplete="off"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+          <div className="grupo-filtro-categoria">
+            <label htmlFor="selectCategoria">Categoría</label>
+            <select
+              id="selectCategoria"
+              name="selectCategoria"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+            >
+              <option value="todas">Todas</option>
+              {CATEGORIAS_DISPONIBLES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {etiquetaCategoria(cat)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="contenedor-feed-principal">
+          <p
+            id="textoFeedVacio"
+            className="feed-vacio"
+            hidden={publicaciones.length > 0 || cargando}
+          >
+            No hay publicaciones que coincidan con tu búsqueda o categoría.
+          </p>
+          <div id="contenedorFeed" className="contenedor-feed">
+            {publicaciones.map((p) => (
+              <PostCard key={p.id} publicacion={p} onToggleLike={manejarLike} />
+            ))}
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/Login.jsx">
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Message from '../components/ui/Message';
+
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    document.body.classList.add('layout-centrado');
+    return () => document.body.classList.remove('layout-centrado');
+  }, []);
+
+  const [correo, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarEnvio(e) {
+    e.preventDefault();
+    setError('');
+    if (!correo.trim() || !contrasena) {
+      setError('Ingresa tu correo y contraseña.');
+      return;
+    }
+    setEnviando(true);
+    try {
+      await login(correo.trim(), contrasena);
+      setTimeout(() => navigate('/explorar'), 400);
+    } catch (err) {
+      const mensaje = err.response?.data?.mensaje || 'No se pudo iniciar sesión.';
+      setError(mensaje);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <>
+      <header className="cabecera-sitio">
+        <div className="cabecera-sitio-interior">
+          <div className="marca-sitio">
+            <h1 className="marca-sitio-titulo">UNAC Forum</h1>
+            <p className="marca-sitio-subtitulo">
+              Foro de anuncios y temas de interés universitario
+            </p>
+          </div>
+        </div>
+      </header>
+      <main>
+        <section className="tarjeta-auth" aria-labelledby="tituloLogin">
+          <h2 id="tituloLogin" className="tarjeta-auth-titulo">Iniciar sesión</h2>
+          <p className="tarjeta-auth-descripcion">
+            Accede con tu correo institucional (simulación con usuarios de
+            prueba). Ejemplo: <span className="enlace-sutil">pepito.perez@estudiantes.unac.edu</span>
+            / <span className="enlace-sutil">demo123</span>
+          </p>
+          <form
+            id="formularioLogin"
+            className="formulario-auth"
+            method="post"
+            onSubmit={manejarEnvio}
+            noValidate
+          >
+            <div className="campo-formulario">
+              <label htmlFor="correo">Correo</label>
+              <input
+                id="correo"
+                name="correo"
+                type="email"
+                autoComplete="username"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                required
+              />
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="contrasena">Contraseña</label>
+              <input
+                id="contrasena"
+                name="contrasena"
+                type="password"
+                autoComplete="current-password"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                required
+              />
+            </div>
+            <Message texto={error} error />
+            <div className="acciones-formulario-auth">
+              <button type="submit" className="boton-primario" disabled={enviando}>
+                {enviando ? 'Entrando…' : 'Entrar al foro'}
+              </button>
+            </div>
+          </form>
+          <p className="enlaces-auth">
+            ¿No tienes cuenta? <Link to="/registro">Crear cuenta</Link>
+          </p>
+        </section>
+      </main>
+      <footer className="pie-sitio">
+        <p>Proyecto parcial - HTML, CSS y JavaScript</p>
+      </footer>
+    </>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/NuevaPublicacion.jsx">
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer';
+import Message from '../components/ui/Message';
+import { crearPublicacion } from '../services/publicacionService';
+import { CATEGORIAS_DISPONIBLES, etiquetaCategoria, LONGITUD_MAXIMA_TITULO } from '../constants/categorias';
+
+export default function NuevaPublicacion() {
+  const navigate = useNavigate();
+  const [titulo, setTitulo] = useState('');
+  const [categoria, setCategoria] = useState('');
+  const [contenido, setContenido] = useState('');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarEnvio(e) {
+    e.preventDefault();
+    setError('');
+
+    if (!titulo.trim() || !contenido.trim() || !categoria) {
+      setError('Completa todos los campos.');
+      return;
+    }
+    if (titulo.trim().length > LONGITUD_MAXIMA_TITULO) {
+      setError(`El título no puede superar ${LONGITUD_MAXIMA_TITULO} caracteres.`);
+      return;
+    }
+    if (!CATEGORIAS_DISPONIBLES.includes(categoria)) {
+      setError('Categoría inválida.');
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      await crearPublicacion({
+        titulo: titulo.trim(),
+        contenido: contenido.trim(),
+        categoria
+      });
+      setTimeout(() => navigate('/explorar'), 450);
+    } catch (err) {
+      const mensaje = err.response?.data?.mensaje || 'No se pudo crear la publicación.';
+      setError(mensaje);
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <>
+      <Header
+        subtitulo="Nueva entrada en el tablón"
+        navLabel="Navegación"
+        navLinks={[
+          {
+            kind: 'link',
+            to: '/explorar',
+            label: 'Volver al foro',
+            className: 'boton-secundario'
+          }
+        ]}
+      />
+      <main>
+        <div className="contenedor-formulario-post">
+          <form
+            id="formularioCrearPost"
+            className="formulario-crear-post"
+            method="post"
+            onSubmit={manejarEnvio}
+            noValidate
+          >
+            <h1>Nueva publicación</h1>
+            <p className="texto-ayuda">
+              Comparte convocatorias, eventos, alertas o temas de interés para la
+              comunidad estudiantil.
+            </p>
+            <div className="campo-formulario">
+              <label htmlFor="titulo">Título</label>
+              <input
+                id="titulo"
+                name="titulo"
+                type="text"
+                maxLength={LONGITUD_MAXIMA_TITULO}
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                required
+              />
+              <span className="hint-caracteres">
+                Máximo {LONGITUD_MAXIMA_TITULO} caracteres (incluidos espacios).
+              </span>
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="categoria">Categoría</label>
+              <select
+                id="categoria"
+                name="categoria"
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                required
+              >
+                <option value="" disabled>Selecciona una categoría</option>
+                {CATEGORIAS_DISPONIBLES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {etiquetaCategoria(cat)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="contenido">Descripción</label>
+              <textarea
+                id="contenido"
+                name="contenido"
+                value={contenido}
+                onChange={(e) => setContenido(e.target.value)}
+                required
+                placeholder="Detalle del anuncio o tema de interés…"
+              />
+            </div>
+            <Message texto={error} error />
+            <div className="acciones-crear-post">
+              <button type="submit" className="boton-primario" disabled={enviando}>
+                {enviando ? 'Publicando…' : 'Publicar en el foro'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/Registro.jsx">
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import Message from '../components/ui/Message';
+
+export default function Registro() {
+  const { registro } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    document.body.classList.add('layout-centrado');
+    return () => document.body.classList.remove('layout-centrado');
+  }, []);
+
+  const [nombreCompleto, setNombreCompleto] = useState('');
+  const [nombreUsuario, setNombreUsuario] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
+  const [contrasenaConfirmacion, setContrasenaConfirmacion] = useState('');
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarEnvio(e) {
+    e.preventDefault();
+    setError('');
+
+    if (!nombreCompleto.trim() || !nombreUsuario.trim() || !correo.trim() || !contrasena) {
+      setError('Completa todos los campos.');
+      return;
+    }
+    if (contrasena.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (contrasena !== contrasenaConfirmacion) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      await registro({
+        nombreCompleto: nombreCompleto.trim(),
+        nombreUsuario: nombreUsuario.trim(),
+        correo: correo.trim(),
+        contrasena
+      });
+      setTimeout(() => navigate('/explorar'), 400);
+    } catch (err) {
+      const mensaje = err.response?.data?.mensaje || 'No se pudo crear la cuenta.';
+      setError(mensaje);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <>
+      <header className="cabecera-sitio">
+        <div className="cabecera-sitio-interior">
+          <div className="marca-sitio">
+            <h1 className="marca-sitio-titulo">UNAC Forum</h1>
+            <p className="marca-sitio-subtitulo">
+              Foro de anuncios y temas de interés universitario
+            </p>
+          </div>
+        </div>
+      </header>
+      <main>
+        <section className="tarjeta-auth" aria-labelledby="tituloRegistro">
+          <h2 id="tituloRegistro" className="tarjeta-auth-titulo">Crear cuenta</h2>
+          <p className="tarjeta-auth-descripcion">
+            Registro simulado: tu usuario se usa en esta sesión del navegador.
+          </p>
+          <form
+            id="formularioRegistro"
+            className="formulario-auth"
+            method="post"
+            onSubmit={manejarEnvio}
+            noValidate
+          >
+            <div className="campo-formulario">
+              <label htmlFor="nombreCompleto">Nombre completo</label>
+              <input
+                id="nombreCompleto"
+                name="nombreCompleto"
+                type="text"
+                autoComplete="name"
+                value={nombreCompleto}
+                onChange={(e) => setNombreCompleto(e.target.value)}
+                required
+              />
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="nombreUsuario">Nombre de usuario</label>
+              <input
+                id="nombreUsuario"
+                name="nombreUsuario"
+                type="text"
+                autoComplete="nickname"
+                value={nombreUsuario}
+                onChange={(e) => setNombreUsuario(e.target.value)}
+                required
+              />
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="correo">Correo</label>
+              <input
+                id="correo"
+                name="correo"
+                type="email"
+                autoComplete="email"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                required
+              />
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="contrasena">Contraseña</label>
+              <input
+                id="contrasena"
+                name="contrasena"
+                type="password"
+                autoComplete="new-password"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                required
+              />
+            </div>
+            <div className="campo-formulario">
+              <label htmlFor="contrasenaConfirmacion">Confirmar contraseña</label>
+              <input
+                id="contrasenaConfirmacion"
+                name="contrasenaConfirmacion"
+                type="password"
+                autoComplete="new-password"
+                value={contrasenaConfirmacion}
+                onChange={(e) => setContrasenaConfirmacion(e.target.value)}
+                required
+              />
+            </div>
+            <Message texto={error} error />
+            <div className="acciones-formulario-auth">
+              <button type="submit" className="boton-primario" disabled={enviando}>
+                {enviando ? 'Creando…' : 'Registrarme'}
+              </button>
+            </div>
+          </form>
+          <p className="enlaces-auth">
+            ¿Ya tienes cuenta? <Link to="/">Iniciar sesión</Link>
+          </p>
+        </section>
+      </main>
+      <footer className="pie-sitio">
+        <p>Proyecto parcial - HTML, CSS y JavaScript</p>
+      </footer>
+    </>
+  );
+}
+</file>
+
+<file path="frontend/src/services/api.js">
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' }
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('unac_forum_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (respuesta) => respuesta,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('unac_forum_token');
+      localStorage.removeItem('unac_forum_usuario');
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+</file>
+
+<file path="frontend/src/services/authService.js">
+import api from './api';
+
+export async function registrarUsuario(datos) {
+  const { data } = await api.post('/auth/registro', datos);
+  return data;
+}
+
+export async function loginUsuario(credenciales) {
+  const { data } = await api.post('/auth/login', credenciales);
+  return data;
+}
+
+export async function obtenerPerfil() {
+  const { data } = await api.get('/auth/perfil');
+  return data;
+}
+</file>
+
+<file path="frontend/src/services/publicacionService.js">
+import api from './api';
+
+export async function listarPublicaciones({ q = '', categoria = 'todas' } = {}) {
+  const params = {};
+  if (q) params.q = q;
+  if (categoria && categoria !== 'todas') params.categoria = categoria;
+  const { data } = await api.get('/publicaciones', { params });
+  return data.publicaciones;
+}
+
+export async function crearPublicacion(datos) {
+  const { data } = await api.post('/publicaciones', datos);
+  return data.publicacion;
+}
+
+export async function toggleLike(id) {
+  const { data } = await api.post(`/publicaciones/${id}/like`);
+  return data.publicacion;
+}
+</file>
+
+<file path="frontend/src/styles/auth.css">
+/* ======================================================================================================================
+   FUNCIONALIDAD 1 y 2 - Pantallas de login y registro
+   Heredan colores de global.css usamos tema oscuro.
+   ====================================================================================================================== */
+
+.tarjeta-auth {
+  width: min(420px, 100%);
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  padding: 2rem;
+  box-shadow: var(--sombraSuave);
+  border: 1px solid var(--colorBorde);
+}
+
+.tarjeta-auth-titulo {
+  margin: 0 0 0.35rem;
+  font-size: 1.5rem;
+  color: var(--colorPrimario);
+}
+
+.tarjeta-auth-descripcion {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: var(--colorTextoSuave);
+}
+
+.formulario-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.campo-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campo-formulario label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--colorTexto);
+}
+
+.campo-formulario input {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campo-formulario input:focus {
+  outline: none;
+  border-color: var(--colorAcento);
+  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.2);
+}
+
+.acciones-formulario-auth {
+  margin-top: 0.5rem;
+}
+
+.acciones-formulario-auth .boton-primario {
+  width: 100%;
+}
+
+.enlaces-auth {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.mensaje-error,
+.mensaje-exito {
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radioMedio);
+  font-size: 0.9rem;
+}
+
+.mensaje-error {
+  background: var(--colorErrorFondo);
+  color: var(--colorError);
+  border: 1px solid rgba(255, 138, 128, 0.35);
+}
+
+.mensaje-exito {
+  background: var(--colorExitoFondo);
+  color: var(--colorExito);
+  border: 1px solid rgba(125, 216, 122, 0.35);
+}
+</file>
+
+<file path="frontend/src/styles/feed.css">
+/* ======================================================================================================================
+   FUNCIONALIDAD 3 y 5 - acá va el Feed, tarjetas y botón de like 
+   Los “chips” de categoría usan fondos suaves azulados o medio amarillos.
+   ====================================================================================================================== */
+
+body > main {
+  padding-top: 2.5rem;
+  padding-bottom: 2rem;
+}
+
+.barra-herramientas-feed {
+  width: var(--anchoContenido);
+  margin: 0 auto 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.grupo-busqueda {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grupo-busqueda label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--colorTextoSuave);
+}
+
+.grupo-busqueda input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+}
+
+.grupo-busqueda input:focus {
+  outline: none;
+  border-color: var(--colorPrimarioSuave);
+  box-shadow: 0 0 0 3px rgba(90, 143, 201, 0.25);
+}
+
+.grupo-filtro-categoria {
+  flex: 0 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.grupo-filtro-categoria label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--colorTextoSuave);
+}
+
+.grupo-filtro-categoria select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  background: var(--colorSuperficieElevada);
+  cursor: pointer;
+}
+
+.contenedor-feed-principal {
+  width: var(--anchoContenido);
+  margin: 0 auto;
+  padding-bottom: 4rem;
+}
+
+.contenedor-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.feed-vacio {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  border: 1px dashed var(--colorBorde);
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post {
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  border: 1px solid var(--colorBorde);
+  box-shadow: var(--sombraSuave);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tarjeta-post-encabezado {
+  padding: 1.25rem 1.25rem 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.5rem 1rem;
+  align-items: start;
+}
+
+.tarjeta-post-titulo {
+  margin: 0;
+  grid-column: 1 / -1;
+  font-size: 1.2rem;
+  color: var(--colorPrimario);
+  line-height: 1.35;
+}
+
+.tarjeta-post-meta {
+  grid-column: 1 / 2;
+  font-size: 0.88rem;
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post-separador {
+  margin: 0 0.35rem;
+}
+
+.chip-categoria {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  justify-self: end;
+  align-self: start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(142, 197, 255, 0.12);
+  color: var(--colorPrimario);
+}
+
+/* Variantes por categoría: tonos azulados y un toque cálido donde encaja */
+.chip-categoria-convocatoria {
+  background: rgba(100, 180, 255, 0.18);
+  color: #9fd4ff;
+}
+
+.chip-categoria-evento {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.chip-categoria-alertaAcademica {
+  background: rgba(255, 160, 100, 0.14);
+  color: #ffb89a;
+}
+
+.chip-categoria-bienestar {
+  background: rgba(125, 216, 122, 0.14);
+  color: var(--colorExito);
+}
+
+.chip-categoria-tecnologia {
+  background: rgba(120, 170, 255, 0.18);
+  color: #a8c4ff;
+}
+
+.chip-categoria-deportes {
+  background: rgba(255, 120, 120, 0.14);
+  color: #ff9e9e;
+}
+
+.chip-categoria-cultura {
+  background: rgba(200, 150, 255, 0.14);
+  color: #d4b8ff;
+}
+
+.chip-categoria-general {
+  background: rgba(232, 237, 244, 0.08);
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post-cuerpo {
+  padding: 0 1.25rem 1rem;
+  font-size: 0.98rem;
+  color: var(--colorTexto);
+}
+
+.tarjeta-post-cuerpo p {
+  margin: 0 0 0.65rem;
+}
+
+.tarjeta-post-cuerpo p:last-child {
+  margin-bottom: 0;
+}
+
+.tarjeta-post-sin-texto {
+  font-style: italic;
+  color: var(--colorTextoSuave);
+}
+
+.tarjeta-post-pie {
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--colorBorde);
+  background: rgba(22, 29, 42, 0.85);
+}
+
+.boton-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTextoSuave);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.boton-like:hover {
+  border-color: var(--colorPrimarioSuave);
+  color: var(--colorPrimario);
+}
+
+.boton-like-activo {
+  border-color: #ff7b9c;
+  color: #ff8fab;
+  background: rgba(255, 80, 120, 0.12);
+}
+
+.boton-like-activo .boton-like-icono {
+  color: #ff8fab;
+}
+
+.boton-like-icono {
+  font-size: 1rem;
+  line-height: 1;
+}
+</file>
+
+<file path="frontend/src/styles/formularioPost.css">
+/* ======================================================================================================================
+   FUNCIONALIDAD 4 - aqui va el formulario de nueva publicación
+   Seguimos el tema oscuro, aqui va el diseño pero para ver la 
+   lógica que es muy intersante, ve a formularioPost.js
+   ====================================================================================================================== */
+
+body > main {
+  padding-top: 2.5rem;
+  padding-bottom: 2rem;
+}
+
+.contenedor-formulario-post {
+  width: min(640px, var(--anchoContenido));
+  margin: 0 auto;
+  padding: 0 0 4rem;
+}
+
+.formulario-crear-post {
+  background: var(--colorSuperficie);
+  border-radius: var(--radioGrande);
+  border: 1px solid var(--colorBorde);
+  box-shadow: var(--sombraSuave);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.formulario-crear-post h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--colorPrimario);
+}
+
+.formulario-crear-post .texto-ayuda {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--colorTextoSuave);
+}
+
+.formulario-crear-post .campo-formulario textarea {
+  min-height: 160px;
+  resize: vertical;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.formulario-crear-post .campo-formulario textarea:focus {
+  outline: none;
+  border-color: var(--colorAcento);
+  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.15);
+}
+
+.formulario-crear-post .campo-formulario select {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  background: var(--colorSuperficieElevada);
+  cursor: pointer;
+}
+
+.formulario-crear-post .campo-formulario select:focus {
+  outline: none;
+  border-color: var(--colorPrimarioSuave);
+  box-shadow: 0 0 0 3px rgba(90, 143, 201, 0.2);
+}
+
+.hint-caracteres {
+  font-size: 0.8rem;
+  color: var(--colorTextoSuave);
+}
+
+.acciones-crear-post {
+  margin-top: 0.25rem;
+}
+
+.acciones-crear-post .boton-primario {
+  min-width: 180px;
+}
+</file>
+
+<file path="frontend/src/styles/global.css">
+/* ======================================================================================================================
+   CAPA DE PRESENTACIÓN con el estilo global del programa
+   Aquí Las “variables” (--colorXD permiten cambiar colores en un solo lugar.
+   ===================================================================================================================== */
+
+:root {
+  /* Fondo general: azul muy oscuro, casi negro */
+  --colorFondo: #0d1118;
+  /* Tarjetas y cajas: un poco más claras que el fondo */
+  --colorSuperficie: #161d2a;
+  --colorSuperficieElevada: #1e2838;
+  /* Azules para textos de énfasis y bordes suaves */
+  --colorPrimario: #8ec5ff;
+  --colorPrimarioSuave: #5a8fc9;
+  --colorPrimarioOscuro: #1a3a5c;
+  /* Amarillo / dorado ligero (botones y hovers) */
+  --colorAcento: #e8c547;
+  --colorAcentoHover: #f0d56a;
+  --colorAcentoOscuro: #2a2310;
+  /* Texto principal y secundario */
+  --colorTexto: #e8edf4;
+  --colorTextoSuave: #9fb0c8;
+  --colorBorde: #2d3d52;
+  /* Mensajes */
+  --colorError: #ff8a80;
+  --colorErrorFondo: #3d1f1f;
+  --colorExito: #7dd87a;
+  --colorExitoFondo: #1a3320;
+  --sombraSuave: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --radioGrande: 14px;
+  --radioMedio: 10px;
+  --anchoContenido: min(1080px, 100% - 2rem);
+  --fuentePrincipal: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root > main {
+  padding-top: 2.5rem;
+  padding-bottom: 2rem;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--fuentePrincipal);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--colorTexto);
+  background: var(--colorFondo);
+}
+
+/* Campos de formulario: mismo estilo base en toda la app */
+input,
+textarea,
+select {
+  color: var(--colorTexto);
+  background: var(--colorSuperficieElevada);
+  border-color: var(--colorBorde);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--colorPrimario);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--colorAcentoHover);
+}
+
+.enlace-sutil {
+  color: var(--colorTextoSuave);
+  font-size: 0.95rem;
+}
+
+/* Barra superior degradado azul con un toque cálido en el borde inferior */
+.cabecera-sitio {
+  background: linear-gradient(
+    160deg,
+    #0f1f35 0%,
+    var(--colorPrimarioOscuro) 45%,
+    #152a45 100%
+  );
+  color: #fff;
+  padding: 1.25rem 1rem;
+  box-shadow: var(--sombraSuave);
+  border-bottom: 1px solid rgba(232, 197, 71, 0.2);
+}
+
+.cabecera-sitio-interior {
+  width: var(--anchoContenido);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.marca-sitio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.marca-sitio-titulo {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+
+.marca-sitio-subtitulo {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.88;
+  color: var(--colorPrimario);
+}
+
+.pie-sitio {
+  margin-top: auto;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--colorTextoSuave);
+  border-top: 1px solid var(--colorBorde);
+  background: var(--colorSuperficie);
+}
+
+.layout-centrado {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-centrado main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* Botón principal amarillo dorado; texto oscuro para buen contraste */
+.boton-primario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: var(--radioMedio);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--colorAcento);
+  color: var(--colorAcentoOscuro);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.boton-primario:hover {
+  background: var(--colorAcentoHover);
+}
+
+.boton-primario:active {
+  transform: scale(0.98);
+}
+
+.boton-secundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid rgba(142, 197, 255, 0.35);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.boton-secundario:hover {
+  background: rgba(142, 197, 255, 0.12);
+  border-color: rgba(232, 197, 71, 0.45);
+}
+
+.barra-usuario-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.texto-usuario-activo {
+  opacity: 0.95;
+}
+
+.nav-cabecera-feed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+</file>
+
+<file path="frontend/vite.config.js">
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true
+      }
+    }
+  }
+});
+</file>
+
+<file path="run_project.bat">
+@echo off
+SETLOCAL
+
+REM Carpeta base = donde esta este .bat
+SET "BASE_DIR=%~dp0"
+
+echo ============================================
+echo    Iniciando UNAC Forum (Backend y Frontend)
+echo ============================================
+echo.
+
+REM Verificar Node/NPM disponibles
+where node >nul 2>nul
+if errorlevel 1 (
+  echo [ERROR] Node.js no esta instalado o no esta en PATH.
+  echo Instala Node.js 18+ y vuelve a ejecutar este archivo.
+  pause
+  exit /b 1
+)
+
+where npm >nul 2>nul
+if errorlevel 1 (
+  echo [ERROR] npm no esta disponible en PATH.
+  echo Reinstala Node.js y vuelve a intentar.
+  pause
+  exit /b 1
+)
+
+REM Intentar iniciar servicio MongoDB si existe (puede requerir permisos)
+sc query MongoDB >nul 2>nul
+if not errorlevel 1 (
+  echo Verificando servicio MongoDB...
+  net start MongoDB >nul 2>nul
+)
+
+REM Instalar dependencias si falta node_modules
+if not exist "%BASE_DIR%backend\node_modules" (
+  echo Instalando dependencias de backend...
+  call npm --prefix "%BASE_DIR%backend" install
+)
+
+if not exist "%BASE_DIR%frontend\node_modules" (
+  echo Instalando dependencias de frontend...
+  call npm --prefix "%BASE_DIR%frontend" install
+)
+
+if not exist "%BASE_DIR%backend\.env" (
+  echo [INFO] No existe backend\.env, copiando desde .env.example...
+  copy "%BASE_DIR%backend\.env.example" "%BASE_DIR%backend\.env" >nul
+)
+
+REM Backend: usar modo desarrollo (nodemon) y puerto configurado en .env (5001)
+echo Iniciando backend...
+start "UNAC Forum Backend" /D "%BASE_DIR%backend" cmd /K npm run dev
+
+REM Frontend: Vite en modo dev con proxy a backend
+echo Iniciando frontend...
+start "UNAC Forum Frontend" /D "%BASE_DIR%frontend" cmd /K npm run dev -- --open
+
+echo.
+echo Backend y frontend se estan iniciando en ventanas separadas.
+echo Cuando carguen, abre en el navegador: http://localhost:5173/
+echo Si backend falla por MongoDB, revisa que el servicio/local Mongo este activo.
+echo Demo: pepito.perez@estudiantes.unac.edu / demo123
+echo.
+echo Presiona una tecla para cerrar este lanzador.
+pause >nul
+
+ENDLOCAL
+</file>
+
+<file path="readme.md">
+# Parcial Programación Web — UNAC Forum
+
+> Foro web dinámico para estudiantes de la UNAC, construido con **React + Vite** (frontend) y **Node.js + Express + MongoDB** (backend). Autenticación real con JWT, persistencia en MongoDB, datos de demostración sembrados al arrancar.
+
+---
+
+## Tabla de contenidos
+
+1. [Stack y características](#1-stack-y-características)
+2. [Cómo correr el proyecto](#2-cómo-correr-el-proyecto)
+3. [Estructura del proyecto](#3-estructura-del-proyecto)
+4. [Base de datos MongoDB](#4-base-de-datos-mongodb)
+5. [API REST — endpoints](#5-api-rest--endpoints)
+6. [Flujo de la aplicación](#6-flujo-de-la-aplicación)
+7. [Documentación por archivo](#7-documentación-por-archivo)
+   - [7.1 Raíz](#71-raíz-del-proyecto)
+   - [7.2 Backend](#72-backend-backend)
+   - [7.3 Frontend](#73-frontend-frontend)
+8. [Equipo](#8-equipo)
+9. [Notas de desarrollo](#9-notas-de-desarrollo)
+
+---
+
+## 1. Stack y características
+
+### Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | React 18, Vite 5, react-router-dom v6, axios, react-hot-toast |
+| Backend | Node.js, Express 4, Mongoose 8, JWT, bcryptjs, CORS, dotenv |
+| Base de datos | MongoDB (local en `mongodb://127.0.0.1:27017/unac_forum`) |
+| Lanzador | `run_project.bat` (Windows) |
+
+### Características
+
+- **Autenticación real** con JWT y contraseñas hasheadas (bcrypt).
+- **Feed** de publicaciones, ordenadas de la más reciente a la más antigua.
+- **Búsqueda por texto** en título, contenido y autor (case-insensitive).
+- **Filtro por categoría** (9 categorías).
+- **Likes persistentes** con conteo y estado por usuario.
+- **Crear publicación** con validación (título máx. 60 caracteres, categoría válida).
+- **Cerrar sesión** con limpieza de `localStorage`.
+- **Protección de rutas** para `/explorar` y `/nueva-publicacion`.
+- **Responsive** con flexbox.
+- **Datos demo** sembrados automáticamente al primer arranque.
+
+---
+
+## 2. Cómo correr el proyecto
+
+### Prerrequisitos
+
+- **Node.js 18+** y **npm** en el PATH.
+- **MongoDB** corriendo en `127.0.0.1:27017` (servicio Windows o `mongod` local).
+
+### Opción A — Lanzador automático (Windows)
+
+Doble clic en `run_project.bat`. El script:
+
+1. Verifica `node` y `npm`.
+2. Intenta arrancar el servicio MongoDB.
+3. Instala dependencias en `backend/` y `frontend/` si hace falta.
+4. Copia `backend/.env.example` → `backend/.env` si no existe.
+5. Abre dos ventanas: **UNAC Forum Backend** y **UNAC Forum Frontend**.
+6. El navegador se abre en `http://localhost:5173/`.
+
+### Opción B — Dos terminales manuales
+
+**Terminal 1 (backend)**:
+```bash
+cd backend
+npm install
+npm run dev
+```
+→ Levanta en `http://localhost:5001` y siembra la base de datos.
+
+**Terminal 2 (frontend)**:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+→ Levanta Vite en `http://localhost:5173` con proxy `/api` → `:5001`.
+
+### Credenciales de demostración
+
+| Campo | Valor |
+|---|---|
+| Email | `pepito.perez@estudiantes.unac.edu` |
+| Contraseña | `demo123` |
+
+También existe `fulano.de.tal@estudiantes.unac.edu` / `demo123`.
+
+---
+
+## 3. Estructura del proyecto
+
+```
+unac-forum/
+├── run_project.bat
+├── readme.md
+│
+├── backend/                        # API REST
+│   ├── package.json
+│   ├── server.js                   # Entrada
+│   ├── app.js                      # Configuración Express
+│   ├── .env.example
+│   ├── config/database.js
+│   ├── controllers/                # Lógica de negocio
+│   ├── middleware/auth.js
+│   ├── models/                     # Esquemas Mongoose
+│   ├── routes/                     # Definición de rutas
+│   ├── services/seedService.js
+│   └── utils/                      # Datos demo + serializers
+│
+└── frontend/                       # SPA React
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── main.jsx                # Entrada
+        ├── app/App.jsx             # Router + Providers
+        ├── components/             # auth/, layout/, ui/
+        ├── context/AuthContext.jsx
+        ├── pages/                  # Login, Registro, Feed, NuevaPublicacion
+        ├── services/               # api.js, authService.js, publicacionService.js
+        ├── constants/categorias.js
+        └── styles/                 # global, auth, feed, formularioPost
+```
+
+---
+
+## 4. Base de datos MongoDB
+
+### Conexión
+
+- **Driver**: Mongoose 8.
+- **URI por defecto**: `mongodb://127.0.0.1:27017/unac_forum`.
+- **Configurable** vía `MONGODB_URI` en `backend/.env`.
+- **Conexión** en `backend/config/database.js` (`conectarDB()`).
+
+### Colecciones
+
+#### `usuarios`
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `_id` | ObjectId | auto |
+| `nombreCompleto` | String | requerido, trim, mín. 2 |
+| `nombreUsuario` | String | requerido, trim, mín. 2, **único case-insensitive** |
+| `correo` | String | requerido, lowercase, trim, regex email, **único case-insensitive** |
+| `contrasena` | String | requerido, mín. 6, `select: false` (no se devuelve por defecto) |
+| `createdAt` | Date | auto |
+| `updatedAt` | Date | auto |
+
+- Las contraseñas se **hashean con bcrypt** (10 salt rounds) en un hook `pre('save')`.
+- Los índices únicos usan colación `{ locale: 'es', strength: 2 }` para que `Pepito@x.com` y `pepito@x.com` se consideren duplicados.
+
+#### `publicaciones`
+
+| Campo | Tipo | Restricciones |
+|---|---|---|
+| `_id` | ObjectId | auto |
+| `titulo` | String | requerido, trim, máx. 60 |
+| `contenido` | String | requerido, trim |
+| `categoria` | String | requerido, **enum** (9 valores) |
+| `idAutor` | ObjectId | ref `usuarios`, requerido |
+| `nombreAutor` | String | requerido, trim |
+| `fechaIso` | Date | default `Date.now`, getter ISO |
+| `idsUsuariosQueDieronLike` | ObjectId[] | ref `usuarios`, default `[]` |
+| `createdAt` | Date | auto |
+| `updatedAt` | Date | auto |
+
+### Categorías válidas (enum)
+
+`convocatoria`, `evento`, `alertaAcademica`, `bienestar`, `tecnologia`, `deportes`, `cultura`, `general`, `socializacion`.
+
+### Siembra automática (seed)
+
+`backend/services/seedService.js` ejecuta `sembrarSiVacio()` al arrancar el backend:
+
+1. Cuenta documentos en `usuarios` y `publicaciones`.
+2. Si ambas colecciones están vacías, inserta:
+   - **2 usuarios demo** (con contraseñas hasheadas, una por una para que dispare el hook `pre('save')`).
+   - **3 publicaciones demo** con `idAutor` y `likesIndice` mapeados a los `_id` reales de los usuarios recién creados.
+3. Si ya hay datos, registra un mensaje y no hace nada.
+
+### Datos de demostración
+
+**Usuarios** (`backend/utils/seedData.js` → `USUARIOS_DUMMY`):
+
+| Índice | nombreCompleto | nombreUsuario | correo | contrasena (texto plano, se hashea al insertar) |
+|---|---|---|---|---|
+| 0 | Pepito Pérez | `pepitoPerez` | `pepito.perez@estudiantes.unac.edu` | `demo123` |
+| 1 | Fulano de Tal | `ThefulanoDeTal` | `fulano.de.tal@estudiantes.unac.edu` | `demo123` |
+
+**Publicaciones** (`PUBLICACIONES_INICIALES`):
+
+| Título | Categoría | Autor (índice) | Likes (índices) | Fecha |
+|---|---|---|---|---|
+| Club de lectura: ciencia ficción latinoamericana | `cultura` | 0 (Pepito) | [1] (Fulano) | 2026-04-01 |
+| Taller de bienestar emocional (gratuito) | `bienestar` | 1 (Fulano) | [] | 2026-04-03 |
+| Sale parche al cerro de las 3 cruces | `socializacion` | 0 (Pepito) | [] | 2026-04-04 |
+
+### Operaciones útiles con `mongosh`
+
+```bash
+# Conectar
+mongosh "mongodb://127.0.0.1:27017/unac_forum"
+
+# Ver usuarios (sin contraseña)
+db.usuarios.find({}, { contrasena: 0 })
+
+# Ver publicaciones
+db.publicaciones.find().sort({ fechaIso: -1 })
+
+# Borrar todo (forzar re-siembra al próximo arranque del backend)
+db.dropDatabase()
+```
+
+---
+
+## 5. API REST — endpoints
+
+| Método | Ruta | Auth | Body / Query | Respuesta |
+|---|---|---|---|---|
+| GET | `/` | — | — | `{ mensaje, version }` |
+| POST | `/api/auth/registro` | — | `{ nombreCompleto, nombreUsuario, correo, contrasena }` | `{ token, usuario }` |
+| POST | `/api/auth/login` | — | `{ correo, contrasena }` | `{ token, usuario }` |
+| GET | `/api/auth/perfil` | ✅ Bearer | — | `{ usuario }` |
+| GET | `/api/publicaciones` | ✅ Bearer | `?q=texto&categoria=valor` | `{ publicaciones: [...] }` |
+| POST | `/api/publicaciones` | ✅ Bearer | `{ titulo, contenido, categoria }` | `{ publicacion }` |
+| POST | `/api/publicaciones/:id/like` | ✅ Bearer | — | `{ publicacion }` (con `usuarioYaDioLike` invertido) |
+
+### Formato del objeto `usuario` (respuesta)
+
+```json
+{
+  "id": "6a1f1edb94b30782578e961a",
+  "nombreCompleto": "Pepito Pérez",
+  "nombreUsuario": "pepitoPerez",
+  "correo": "pepito.perez@estudiantes.unac.edu"
+}
+```
+
+### Formato del objeto `publicacion` (respuesta)
+
+```json
+{
+  "id": "6a1f1fed94034f11fe98a1d9",
+  "titulo": "Club de lectura: ciencia ficción latinoamericana",
+  "contenido": "Se abre inscripción para el círculo de lectura del mes...",
+  "categoria": "cultura",
+  "idAutor": "6a1f1edb94b30782578e961a",
+  "nombreAutor": "Pepito Pérez",
+  "fechaIso": "2026-04-01T15:00:00.000Z",
+  "likes": ["6a1f1edb94b30782578e961b"],
+  "cantidadLikes": 1,
+  "usuarioYaDioLike": false
+}
+```
+
+### Autenticación
+
+Todas las rutas protegidas requieren el header:
+```
+Authorization: Bearer <token>
+```
+El token es un JWT firmado con `JWT_SECRET` (en `.env`) y expira a los **30 días**.
+
+---
+
+## 6. Flujo de la aplicación
+
+1. **Carga inicial**: el usuario abre `http://localhost:5173/`. `<AuthProvider>` lee `localStorage`; si hay token válido, hidrata el usuario.
+2. **Login** → `POST /api/auth/login` → backend valida y devuelve JWT → frontend guarda en `localStorage` → navega a `/explorar` (tras 400 ms).
+3. **Feed** → `GET /api/publicaciones` → backend filtra/ordena → renderiza tarjetas.
+4. **Like** → `POST /api/publicaciones/:id/like` → backend `$addToSet` o `$pull` → frontend reemplaza solo esa tarjeta.
+5. **Nueva publicación** → `POST /api/publicaciones` → backend crea → navega a `/explorar` (tras 450 ms).
+6. **Logout** → limpia `localStorage` y `usuario = null` → navega a `/`.
+
+---
+
+## 7. Documentación por archivo
+
+### 7.1 Raíz del proyecto
+
+| Archivo | Descripción |
+|---|---|
+| `run_project.bat` | Lanzador Windows. Verifica Node/npm, inicia MongoDB, instala deps, copia `.env`, abre dos ventanas (backend + frontend). |
+| `readme.md` | Este documento. |
+
+### 7.2 Backend (`backend/`)
+
+#### Archivos de configuración
+
+| Archivo | Descripción |
+|---|---|
+| `package.json` | CommonJS. Deps: `express`, `mongoose@^8`, `bcryptjs`, `jsonwebtoken`, `cors`, `dotenv`. DevDep: `nodemon`. Scripts `start` y `dev`. |
+| `.env.example` | Plantilla: `PORT=5001`, `MONGODB_URI`, `JWT_SECRET`. |
+| `.gitignore` | Ignora `node_modules`, `.env`, `*.log`. |
+
+#### Entrada y configuración
+
+| Archivo | Descripción |
+|---|---|
+| `server.js` | Entrada. Carga `.env` → `conectarDB()` → `sembrarSiVacio()` → `app.listen(PORT)`. Si falla la DB, `process.exit(1)`. |
+| `app.js` | Express puro. CORS + JSON (8MB) + urlencoded. Monta `/api/auth` y `/api/publicaciones`. Handlers 404 y 500. Exporta la app. |
+| `config/database.js` | `conectarDB()` lee `MONGODB_URI` (default `mongodb://127.0.0.1:27017/unac_forum`) y conecta con Mongoose. |
+
+#### Modelos
+
+| Archivo | Descripción |
+|---|---|
+| `models/Usuario.js` | Esquema Mongoose: `nombreCompleto`, `nombreUsuario`, `correo`, `contrasena` (con `select: false`). Hook `pre('save')` hashea con bcrypt. Método `compararContrasena(plain)`. Índices únicos con colación case-insensitive. |
+| `models/Publicacion.js` | Esquema Mongoose: `titulo` (máx. 60), `contenido`, `categoria` (enum 9 valores), `idAutor` (ref Usuario), `nombreAutor`, `fechaIso`, `idsUsuariosQueDieronLike` (array de ObjectId). Timestamps. Exporta también `CATEGORIAS`. |
+
+#### Middleware
+
+| Archivo | Descripción |
+|---|---|
+| `middleware/auth.js` | `autenticar` lee `Authorization: Bearer <token>`, verifica con `JWT_SECRET`, carga el usuario (sin contraseña) y lo adjunta a `req.usuario`. Devuelve 401 si falta/invalida. |
+
+#### Controladores
+
+| Archivo | Descripción |
+|---|---|
+| `controllers/authController.js` | `registrar` (valida, crea, hashea via hook, firma JWT 30d), `login` (busca case-insensitive, compara con `compararContrasena`, firma JWT), `obtenerPerfil` (devuelve `req.usuario`). Helper `escapeRegex` para prevenir regex injection. |
+| `controllers/publicacionController.js` | `listar` (filtra por `q` y `categoria`, ordena por `fechaIso` desc, calcula `cantidadLikes` y `usuarioYaDioLike` por publicación), `crear` (valida título ≤ 60 + categoría válida, asigna `idAutor`/`nombreAutor` de `req.usuario`), `toggleLike` (`$addToSet` o `$pull` según estado actual). |
+
+#### Rutas
+
+| Archivo | Descripción |
+|---|---|
+| `routes/authRoutes.js` | `POST /registro`, `POST /login`, `GET /perfil` (autenticado). |
+| `routes/publicacionRoutes.js` | `router.use(autenticar)` aplica auth a todo. `GET /`, `POST /`, `POST /:id/like`. |
+
+#### Servicios
+
+| Archivo | Descripción |
+|---|---|
+| `services/seedService.js` | `sembrarSiVacio()`. Si las colecciones están vacías, crea 2 usuarios con `Usuario.create()` uno a uno (para que dispare `pre('save')` y hashee) y 3 publicaciones con `idAutor`/`likes` mapeados a los `_id` reales. |
+
+#### Utilidades
+
+| Archivo | Descripción |
+|---|---|
+| `utils/seedData.js` | Constantes: `LONGITUD_MAXIMA_TITULO=60`, `CATEGORIAS_DISPONIBLES` (9), `USUARIOS_DUMMY` (2), `PUBLICACIONES_INICIALES` (3 con `autorIndice` y `likesIndice`). |
+| `utils/serializers.js` | `usuarioPublico(doc)` → `{id, nombreCompleto, nombreUsuario, correo}`. `publicacionPublico(doc, usuarioId)` → incluye `cantidadLikes` y `usuarioYaDioLike`. |
+
+### 7.3 Frontend (`frontend/`)
+
+#### Configuración y entrada
+
+| Archivo | Descripción |
+|---|---|
+| `package.json` | ESM (`"type": "module"`). Deps: `react`, `react-dom`, `react-router-dom@^6`, `axios`, `framer-motion`, `react-hot-toast`, `lucide-react`. DevDeps: `vite@^5`, `@vitejs/plugin-react`. |
+| `vite.config.js` | Plugin React. Dev server en puerto **5173**. Proxy `/api` → `http://localhost:5001` con `changeOrigin: true`. |
+| `index.html` | HTML raíz de Vite. `<div id="root">` + `<script type="module" src="/src/main.jsx">`. |
+| `.gitignore` | Ignora `node_modules`, `dist`, `*.log`. |
+
+#### Raíz de React
+
+| Archivo | Descripción |
+|---|---|
+| `src/main.jsx` | Punto de entrada. Importa los 4 CSS (`global`, `auth`, `feed`, `formularioPost`) y monta `<App />` en `<StrictMode>`. |
+| `src/app/App.jsx` | `<BrowserRouter>` + `<AuthProvider>` + `<Toaster>` + `<Routes>`. Rutas: `/` (Login), `/registro`, `/explorar` (protegido), `/nueva-publicacion` (protegido), `*` → `/`. |
+
+#### Componentes
+
+| Archivo | Descripción |
+|---|---|
+| `src/components/auth/ProtectedRoute.jsx` | Si `cargando`, retorna `null`. Si no autenticado, `<Navigate to="/" replace />`. Si autenticado, renderiza `children`. |
+| `src/components/layout/Header.jsx` | Cabecera reutilizable. Props: `subtitulo`, `navLinks[]`, `navLabel`. Renderiza marca, saludo y nav con botones/enlaces. Incluye "Cerrar sesión" (llama a `logout` del contexto). |
+| `src/components/layout/Footer.jsx` | Pie de página simple con `<footer class="pie-sitio">`. |
+| `src/components/ui/Message.jsx` | Mensaje de error/éxito. Si no hay `texto`, retorna `null`. Clase `mensaje-error` o `mensaje-exito` según prop `error`. |
+| `src/components/ui/Field.jsx` | Wrapper `<div class="campo-formulario"><label>{label}</label>{children}</div>`. |
+
+#### Contexto
+
+| Archivo | Descripción |
+|---|---|
+| `src/context/AuthContext.jsx` | Estado: `usuario`, `cargando`. En mount, lee `localStorage` y valida el token con `obtenerPerfil()`. Expone: `login(correo, contrasena)`, `registro(datos)`, `logout()`, `estaAutenticado`. |
+
+#### Páginas
+
+| Archivo | Descripción |
+|---|---|
+| `src/pages/Login.jsx` | Inicio de sesión. Agrega `layout-centrado` al `<body>` en `useEffect`. Estado: `correo`, `contrasena`, `error`, `enviando`. Llama a `login()`, navega a `/explorar` tras 400 ms. Enlace a `/registro`. |
+| `src/pages/Registro.jsx` | Registro. Mismo patrón (agrega `layout-centrado` al body). Estado: 5 campos + `error` + `enviando`. Valida localmente (no vacíos, contraseña ≥ 6, coinciden). Llama a `registro()`, navega a `/explorar` tras 400 ms. Enlace a `/`. |
+| `src/pages/Feed.jsx` | Foro principal. Estado: `publicaciones`, `cargando`, `error`, `q` (búsqueda), `categoria` (filtro). `useEffect` recarga al cambiar `q` o `categoria`. Al hacer like, actualiza solo esa publicación. Renderiza `<Header>`, toolbar, `<p id="textoFeedVacio" hidden>`, `<div id="contenedorFeed">` con `PostCard`s, `<Footer>`. |
+| `src/pages/NuevaPublicacion.jsx` | Formulario de nueva publicación. Estado: `titulo`, `categoria`, `contenido`, `error`, `enviando`. `maxLength={60}` en título. Llama a `crearPublicacion`, navega a `/explorar` tras 450 ms. |
+
+#### Servicios (HTTP)
+
+| Archivo | Descripción |
+|---|---|
+| `src/services/api.js` | Axios con `baseURL: '/api'`. Request interceptor: añade `Bearer` desde `localStorage`. Response interceptor: en 401 limpia storage y redirige a `/`. |
+| `src/services/authService.js` | `registrarUsuario(d)`, `loginUsuario(c)`, `obtenerPerfil()` — wrappers de axios hacia `/auth/*`. |
+| `src/services/publicacionService.js` | `listarPublicaciones({q, categoria})`, `crearPublicacion(d)`, `toggleLike(id)` — wrappers hacia `/publicaciones/*`. |
+
+#### Constantes
+
+| Archivo | Descripción |
+|---|---|
+| `src/constants/categorias.js` | `LONGITUD_MAXIMA_TITULO=60`, `CATEGORIAS_DISPONIBLES` (9), `etiquetaCategoria(cat)` (mapa a etiqueta legible), `formatearFechaLegible(iso)` (formato `es-CO`). |
+
+#### Estilos
+
+| Archivo | Descripción |
+|---|---|
+| `src/styles/global.css` | Variables CSS del tema oscuro, `body`, inputs, `cabecera-sitio` (gradiente azul), marca, `pie-sitio`, `layout-centrado`, `#root` flex column, `#root > main` con padding 2.5rem/2rem, `.boton-primario` (dorado), `.boton-secundario` (borde), `.barra-usuario-cabecera`, `.nav-cabecera-feed`. |
+| `src/styles/auth.css` | `.tarjeta-auth` (420px, sombra, borde), `.tarjeta-auth-titulo`, `.tarjeta-auth-descripcion`, `.formulario-auth`, `.campo-formulario`, focus dorado, `.acciones-formulario-auth` (compuesto que hace el submit full-width), `.enlaces-auth`, `.mensaje-error`/`.mensaje-exito`. |
+| `src/styles/feed.css` | `body > main` con padding, `.barra-herramientas-feed` (flex wrap con buscador + filtro), `.contenedor-feed-principal` (1080px), `.contenedor-feed`, `.feed-vacio`, `.tarjeta-post` (grid 2×2 en encabezado), `.chip-categoria` + 9 variantes por color, `.tarjeta-post-cuerpo`, `.tarjeta-post-pie`, `.boton-like` y `.boton-like-activo` (estado rosa). |
+| `src/styles/formularioPost.css` | `body > main` con padding, `.contenedor-formulario-post` (640px), `.formulario-crear-post` (flex column, sombra), estilos de `<h1>`, `.texto-ayuda`, textarea/select dentro de `.campo-formulario`, `.hint-caracteres`, `.acciones-crear-post` (botón min 180px). |
+
+---
+
+## 8. Equipo
+
+- Daniel Santiago Rodríguez Gerena
+- Abdiel Esteban Amorocho de Sousa
+- Juan José Oquendo Jaramillo
+- Karol Dayana Pinto Hortua
+
+---
+
+## 9. Notas de desarrollo
+
+- **HMR de Vite**: cambios en CSS y componentes se aplican al instante sin recargar.
+- **nodemon**: cambios en el backend recargan el servidor automáticamente.
+- **Persistencia tras recargar**: el JWT en `localStorage` mantiene la sesión activa (30 días de expiración).
+- **Limpiar la base de datos**: `mongosh` → `use unac_forum` → `db.dropDatabase()`. Al próximo arranque del backend se re-siembran los datos demo.
+- **Cambiar `JWT_SECRET` en producción**: editar `backend/.env` (no commitear).
+- **Posibles mejoras**: comentarios en publicaciones, paginación del feed, imágenes adjuntas, notificaciones en tiempo real, roles de moderador.
+</file>
+
+</files>

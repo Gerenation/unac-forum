@@ -54,6 +54,12 @@ export default function NuevaPublicacion() {
         navLinks={[
           {
             kind: 'link',
+            to: '/perfil',
+            label: 'Mi perfil',
+            className: 'boton-secundario'
+          },
+          {
+            kind: 'link',
             to: '/explorar',
             label: 'Volver al foro',
             className: 'boton-secundario'

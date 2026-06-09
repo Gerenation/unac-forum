@@ -6,6 +6,8 @@ import Login from '../pages/Login';
 import Registro from '../pages/Registro';
 import Feed from '../pages/Feed';
 import NuevaPublicacion from '../pages/NuevaPublicacion';
+import Perfil from '../pages/Perfil';
+import Landing from '../pages/Landing';
 
 export default function App() {
   return (
@@ -22,7 +24,8 @@ export default function App() {
           }}
         />
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/registro" element={<Registro />} />
           <Route
             path="/explorar"
@@ -37,6 +40,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <NuevaPublicacion />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/perfil"
+            element={
+              <ProtectedRoute>
+                <Perfil />
               </ProtectedRoute>
             }
           />

@@ -73,6 +73,13 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
+  async function refrescarUsuario() {
+    const data = await svcPerfil();
+    setUsuario(data.usuario);
+    localStorage.setItem(CLAVE_USUARIO, JSON.stringify(data.usuario));
+    return data.usuario;
+  }
+
   const value = useMemo(
     () => ({
       usuario,
@@ -80,7 +87,8 @@ export function AuthProvider({ children }) {
       estaAutenticado: !!usuario,
       login,
       registro,
-      logout
+      logout,
+      refrescarUsuario
     }),
     [usuario, cargando]
   );

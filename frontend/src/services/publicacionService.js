@@ -17,3 +17,13 @@ export async function toggleLike(id) {
   const { data } = await api.post(`/publicaciones/${id}/like`);
   return data.publicacion;
 }
+
+export async function eliminarPublicacion(id) {
+  const { data } = await api.delete(`/publicaciones/${id}`);
+  return data;
+}
+
+export async function agregarComentario(id, texto) {
+  const { data } = await api.post(`/publicaciones/${id}/comentarios`, { texto });
+  return data.publicacion;
+}

@@ -238,3 +238,153 @@ body > main {
   font-size: 1rem;
   line-height: 1;
 }
+
+/* Acciones de autor y de participación en la tarjeta */
+.tarjeta-post-acciones-autor {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  display: flex;
+  gap: 0.4rem;
+  justify-self: end;
+  align-self: start;
+}
+
+.boton-eliminar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(255, 138, 128, 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--colorError);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.boton-eliminar:hover {
+  background: rgba(255, 138, 128, 0.12);
+  border-color: var(--colorError);
+}
+
+.boton-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tarjeta-post-pie-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.boton-toggle-comentarios {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTextoSuave);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.boton-toggle-comentarios:hover {
+  border-color: var(--colorPrimarioSuave);
+  color: var(--colorPrimario);
+}
+
+.boton-toggle-comentarios-activo {
+  border-color: var(--colorPrimarioSuave);
+  color: var(--colorPrimario);
+  background: rgba(142, 197, 255, 0.08);
+}
+
+.seccion-comentarios {
+  border-top: 1px solid var(--colorBorde);
+  padding: 0.85rem 1.25rem 1rem;
+  background: rgba(13, 17, 24, 0.5);
+}
+
+.seccion-comentarios h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  color: var(--colorPrimario);
+}
+
+.comentarios-vacio {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--colorTextoSuave);
+  font-style: italic;
+}
+
+.comentario-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed var(--colorBorde);
+  font-size: 0.9rem;
+}
+
+.comentario-item:last-of-type {
+  border-bottom: none;
+}
+
+.comentario-autor {
+  font-weight: 600;
+  color: var(--colorPrimario);
+}
+
+.comentario-meta {
+  color: var(--colorTextoSuave);
+  font-size: 0.78rem;
+}
+
+.comentario-texto {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.formulario-comentario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.formulario-comentario textarea {
+  min-height: 70px;
+  resize: vertical;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  line-height: 1.4;
+}
+
+.formulario-comentario textarea:focus {
+  outline: none;
+  border-color: var(--colorAcento);
+  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.15);
+}
+
+.formulario-comentario .boton-primario {
+  align-self: flex-end;
+  min-width: 160px;
+}
+
+.mensaje-comentario-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--colorError);
+}
