@@ -16,6 +16,7 @@
 8. [Documentación por archivo](#8-documentación-por-archivo)
 9. [Equipo](#9-equipo)
 10. [Notas de desarrollo](#10-notas-de-desarrollo)
+11. [Entrega final — Documentación](#11-entrega-final--documentación)
 
 ---
 
@@ -554,3 +555,29 @@ Authorization: Bearer <token>
 - Imágenes adjuntas en publicaciones.
 - Notificaciones en tiempo real (WebSockets).
 - Roles de moderador.
+
+---
+
+## 11. Entrega final — Documentación
+
+La carpeta [`documentation/`](documentation/) contiene los documentos de la entrega final:
+
+| Documento | Descripción |
+|---|---|
+| [`documentation/Manual-de-Usuario.md`](documentation/Manual-de-Usuario.md) | Manual completo para el usuario final |
+| [`documentation/formatos-funcionalidades/`](documentation/formatos-funcionalidades/) | 10 formatos formales de funcionalidades (F01–F10) |
+
+### Formatos incluidos
+
+| Código | Funcionalidad |
+|---|---|
+| F01 | Manejo de sesión (login y logout) |
+| F02 | Registrar usuario |
+| F03 | Filtrar foros |
+| F04 | Crear foros |
+| F05 | Dar like a foros |
+| F06 | Comentar foro |
+| F07 | Eliminar foro |
+| F08 | Editar perfil de usuario |
+| F09 | Protección de rutas |
+| F10 | Multi-categoría en publicaciones |
