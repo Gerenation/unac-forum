@@ -12,6 +12,8 @@ const CATEGORIAS = [
   'socializacion'
 ];
 
+const MAX_CATEGORIAS_POR_PUBLICACION = 5;
+
 const publicacionSchema = new mongoose.Schema(
   {
     titulo: {
@@ -26,14 +28,23 @@ const publicacionSchema = new mongoose.Schema(
       required: [true, 'El contenido es obligatorio'],
       trim: true
     },
-    categoria: {
-      type: String,
-      required: [true, 'La categoría es obligatoria'],
-      enum: {
-        values: CATEGORIAS,
-        message: 'Categoría inválida'
-      },
-      default: 'general'
+    categorias: {
+      type: [
+        {
+          type: String,
+          enum: {
+            values: CATEGORIAS,
+            message: 'Categoría inválida: {VALUE}'
+          }
+        }
+      ],
+      required: [true, 'Debes asignar al menos una categoría'],
+      validate: {
+        validator(arr) {
+          return Array.isArray(arr) && arr.length >= 1 && arr.length <= MAX_CATEGORIAS_POR_PUBLICACION;
+        },
+        message: `Debes elegir entre 1 y ${MAX_CATEGORIAS_POR_PUBLICACION} categorías`
+      }
     },
     idAutor: {
       type: mongoose.Schema.Types.ObjectId,
@@ -84,6 +95,8 @@ const publicacionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+publicacionSchema.index({ categorias: 1 });
+
 publicacionSchema.set('toJSON', { getters: true });
 publicacionSchema.path('fechaIso').get(function (valor) {
   return valor instanceof Date ? valor.toISOString() : valor;
@@ -91,3 +104,4 @@ publicacionSchema.path('fechaIso').get(function (valor) {
 
 module.exports = mongoose.model('Publicacion', publicacionSchema);
 module.exports.CATEGORIAS = CATEGORIAS;
+module.exports.MAX_CATEGORIAS_POR_PUBLICACION = MAX_CATEGORIAS_POR_PUBLICACION;

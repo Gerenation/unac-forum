@@ -9,6 +9,17 @@ import NuevaPublicacion from '../pages/NuevaPublicacion';
 import Perfil from '../pages/Perfil';
 import Landing from '../pages/Landing';
 
+/**
+ * Componente raíz de la aplicación React: enrutamiento y proveedor de autenticación.
+ *
+ * Precondición: debe montarse en `#root` con React 18.
+ * Postcondición: todas las rutas quedan disponibles según la tabla de navegación.
+ *
+ * Rutas públicas: `/`, `/login`, `/registro`.
+ * Rutas protegidas: `/explorar`, `/nueva-publicacion`, `/perfil`.
+ *
+ * @returns {JSX.Element} Árbol de rutas del foro UNAC.
+ */
 export default function App() {
   return (
     <BrowserRouter>

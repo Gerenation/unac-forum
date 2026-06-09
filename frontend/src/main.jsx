@@ -1,3 +1,10 @@
+/**
+ * Punto de entrada de la aplicación React (Vite).
+ * Monta el componente raíz `App` en el elemento `#root` del DOM.
+ *
+ * Precondición: `index.html` contiene `<div id="root"></div>`.
+ * Postcondición: la SPA queda renderizada en modo estricto de React 18.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './app/App.jsx';

@@ -1,12 +1,8 @@
 
 .landing-page-bg {
-    /* Combinamos un degradado oscuro con tu nueva imagen del campus */
-    background: linear-gradient(
-                  rgba(11, 15, 25, 0.88), 
-                  rgba(11, 15, 25, 0.95)
-                ), 
-                url('/campus-unac.png') no-repeat center center / cover;
-    
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
     color: #FFFFFF;
     min-height: 100vh;
     display: flex;
@@ -211,6 +207,18 @@
     color: #FFFFFF;
     font-weight: bold;
     opacity: 0.9;
+}
+
+.landing-cabecera {
+    background: transparent;
+    box-shadow: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 0.5rem;
+}
+
+.landing-cabecera-interior {
+    width: 100%;
+    max-width: 1200px;
 }
 
 /* --- MÓVILES Y ADAPTACIÓN --- */

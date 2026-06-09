@@ -2,9 +2,20 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Message from '../components/ui/Message';
+import SiteBrand from '../components/layout/SiteBrand';
 
+/**
+ * Pantalla de inicio de sesión del foro UNAC.
+ *
+ * Funcionalidad cubierta: manejo de sesión (login) y persistencia de JWT.
+ *
+ * Precondición: el usuario tiene cuenta registrada con correo y contraseña válidos.
+ * Postcondición: token y perfil guardados en localStorage; redirección al feed.
+ *
+ * @returns {JSX.Element} Formulario de autenticación.
+ */
 export default function Login() {
-  const { login } = useAuth();
+  const { login, estaAutenticado, cargando } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -12,11 +23,23 @@ export default function Login() {
     return () => document.body.classList.remove('layout-centrado');
   }, []);
 
+  /** Si ya hay sesión activa, envía al feed sin pedir credenciales de nuevo. */
+  useEffect(() => {
+    if (!cargando && estaAutenticado) {
+      navigate('/explorar', { replace: true });
+    }
+  }, [cargando, estaAutenticado, navigate]);
+
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
 
+  /**
+   * Envía credenciales al backend y abre sesión en el cliente.
+   *
+   * @param {import('react').FormEvent} e - Evento submit del formulario.
+   */
   async function manejarEnvio(e) {
     e.preventDefault();
     setError('');
@@ -40,12 +63,7 @@ export default function Login() {
     <>
       <header className="cabecera-sitio">
         <div className="cabecera-sitio-interior">
-          <div className="marca-sitio">
-            <h1 className="marca-sitio-titulo">UNAC Forum</h1>
-            <p className="marca-sitio-subtitulo">
-              Foro de anuncios y temas de interés universitario
-            </p>
-          </div>
+          <SiteBrand subtitulo="Foro de anuncios y temas de interés universitario" />
         </div>
       </header>
       <main>
@@ -100,7 +118,7 @@ export default function Login() {
         </section>
       </main>
       <footer className="pie-sitio">
-        <p>Proyecto parcial - HTML, CSS y JavaScript</p>
+        <p>Proyecto parcial — UNAC Forum (React + Node.js)</p>
       </footer>
     </>
   );

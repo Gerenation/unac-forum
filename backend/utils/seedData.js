@@ -1,9 +1,10 @@
 /**
  * Datos de ejemplo para sembrar la base de datos la primera vez.
- * Mantiene la misma información que tenía la versión vanilla del foro.
+ * Las publicaciones demo usan varias categorías para reflejar la intención del autor.
  */
 
 const LONGITUD_MAXIMA_TITULO = 60;
+const MAX_CATEGORIAS_POR_PUBLICACION = 5;
 
 const CATEGORIAS_DISPONIBLES = [
   'convocatoria',
@@ -37,7 +38,7 @@ const PUBLICACIONES_INICIALES = [
     titulo: 'Club de lectura: ciencia ficción latinoamericana',
     contenido:
       'Se abre inscripción para el círculo de lectura del mes. Nos reunimos los viernes en la biblioteca central. Cupos limitados.',
-    categoria: 'cultura',
+    categorias: ['cultura', 'evento', 'socializacion'],
     autorIndice: 0,
     nombreAutor: 'Pepito Pérez',
     fechaIso: new Date('2026-04-01T15:00:00.000Z'),
@@ -47,7 +48,7 @@ const PUBLICACIONES_INICIALES = [
     titulo: 'Taller de bienestar emocional (gratuito)',
     contenido:
       'La psicología estudiantil ofrece cuatro sesiones sobre manejo del estrés en parciales. Inscripción en ventanilla 3.',
-    categoria: 'bienestar',
+    categorias: ['bienestar', 'alertaAcademica'],
     autorIndice: 1,
     nombreAutor: 'Fulano de Tal',
     fechaIso: new Date('2026-04-03T10:30:00.000Z'),
@@ -56,7 +57,7 @@ const PUBLICACIONES_INICIALES = [
   {
     titulo: 'Sale parche al cerro de las 3 cruces',
     contenido: 'el domingo 19 de abril cupos limitados (habrá comida)',
-    categoria: 'socializacion',
+    categorias: ['socializacion', 'deportes', 'evento'],
     autorIndice: 0,
     nombreAutor: 'Pepito Pérez',
     fechaIso: new Date('2026-04-04T10:30:00.000Z'),
@@ -66,6 +67,7 @@ const PUBLICACIONES_INICIALES = [
 
 module.exports = {
   LONGITUD_MAXIMA_TITULO,
+  MAX_CATEGORIAS_POR_PUBLICACION,
   CATEGORIAS_DISPONIBLES,
   USUARIOS_DUMMY,
   PUBLICACIONES_INICIALES

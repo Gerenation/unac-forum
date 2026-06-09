@@ -81,3 +81,46 @@ body > main {
 .acciones-crear-post .boton-primario {
   min-width: 180px;
 }
+
+.grilla-categorias-fieldset {
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  padding: 1rem;
+  margin: 0;
+}
+
+.grilla-categorias-fieldset legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0 0.35rem;
+  color: var(--colorTextoSuave);
+}
+
+.grilla-categorias {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.opcion-categoria {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  cursor: pointer;
+  font-size: 0.88rem;
+  background: var(--colorSuperficieElevada);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.opcion-categoria input {
+  accent-color: var(--colorAcento);
+}
+
+.opcion-categoria-activa {
+  border-color: var(--colorAcento);
+  background: rgba(232, 197, 71, 0.12);
+}

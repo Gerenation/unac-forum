@@ -2,15 +2,32 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Message from '../components/ui/Message';
+import SiteBrand from '../components/layout/SiteBrand';
 
+/**
+ * Pantalla de registro de nuevos usuarios en el foro.
+ *
+ * Funcionalidad cubierta: registrar usuario e iniciar sesión automáticamente.
+ *
+ * Precondición: correo y nombre de usuario no deben existir previamente en la base de datos.
+ * Postcondición: cuenta creada, JWT almacenado y redirección al feed.
+ *
+ * @returns {JSX.Element} Formulario de registro.
+ */
 export default function Registro() {
-  const { registro } = useAuth();
+  const { registro, estaAutenticado, cargando } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     document.body.classList.add('layout-centrado');
     return () => document.body.classList.remove('layout-centrado');
   }, []);
+
+  useEffect(() => {
+    if (!cargando && estaAutenticado) {
+      navigate('/explorar', { replace: true });
+    }
+  }, [cargando, estaAutenticado, navigate]);
 
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [nombreUsuario, setNombreUsuario] = useState('');
@@ -20,6 +37,11 @@ export default function Registro() {
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
 
+  /**
+   * Valida campos locales y registra al usuario en el backend.
+   *
+   * @param {import('react').FormEvent} e - Evento submit.
+   */
   async function manejarEnvio(e) {
     e.preventDefault();
     setError('');
@@ -58,19 +80,15 @@ export default function Registro() {
     <>
       <header className="cabecera-sitio">
         <div className="cabecera-sitio-interior">
-          <div className="marca-sitio">
-            <h1 className="marca-sitio-titulo">UNAC Forum</h1>
-            <p className="marca-sitio-subtitulo">
-              Foro de anuncios y temas de interés universitario
-            </p>
-          </div>
+          <SiteBrand subtitulo="Foro de anuncios y temas de interés universitario" />
         </div>
       </header>
       <main>
         <section className="tarjeta-auth" aria-labelledby="tituloRegistro">
           <h2 id="tituloRegistro" className="tarjeta-auth-titulo">Crear cuenta</h2>
           <p className="tarjeta-auth-descripcion">
-            Registro simulado: tu usuario se usa en esta sesión del navegador.
+            Registro simulado: tu usuario se guarda en la base de datos y queda
+            activo en esta sesión del navegador.
           </p>
           <form
             id="formularioRegistro"
@@ -147,12 +165,12 @@ export default function Registro() {
             </div>
           </form>
           <p className="enlaces-auth">
-            ¿Ya tienes cuenta? <Link to="/">Iniciar sesión</Link>
+            ¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>
           </p>
         </section>
       </main>
       <footer className="pie-sitio">
-        <p>Proyecto parcial - HTML, CSS y JavaScript</p>
+        <p>Proyecto parcial — UNAC Forum (React + Node.js)</p>
       </footer>
     </>
   );

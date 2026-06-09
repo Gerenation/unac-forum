@@ -1,10 +1,24 @@
 const Publicacion = require('../models/Publicacion');
 const { LONGITUD_MAXIMA_TITULO } = require('../utils/seedData');
 const { publicacionPublico } = require('../utils/serializers');
-const { CATEGORIAS } = require('../models/Publicacion');
+const { CATEGORIAS, MAX_CATEGORIAS_POR_PUBLICACION } = require('../models/Publicacion');
 
 function escapeRegex(texto) {
   return String(texto).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Normaliza el arreglo de categorías recibido en el body de la petición.
+ * Acepta `categorias` (array) o `categoria` (string legacy) por compatibilidad.
+ */
+function normalizarCategoriasEntrada(body) {
+  let lista = [];
+  if (Array.isArray(body?.categorias)) {
+    lista = body.categorias.map((c) => String(c).trim()).filter(Boolean);
+  } else if (body?.categoria) {
+    lista = [String(body.categoria).trim()];
+  }
+  return [...new Set(lista.filter((c) => CATEGORIAS.includes(c)))];
 }
 
 async function listar(req, res) {
@@ -14,7 +28,7 @@ async function listar(req, res) {
 
     const filtro = {};
     if (categoria && categoria !== 'todas') {
-      filtro.categoria = categoria;
+      filtro.categorias = categoria;
     }
     if (q) {
       const patron = new RegExp(escapeRegex(q), 'i');
@@ -32,7 +46,8 @@ async function listar(req, res) {
 
 async function crear(req, res) {
   try {
-    const { titulo, contenido, categoria } = req.body || {};
+    const { titulo, contenido } = req.body || {};
+    const categorias = normalizarCategoriasEntrada(req.body);
 
     if (!titulo || !String(titulo).trim()) {
       return res.status(400).json({ mensaje: 'El título es obligatorio' });
@@ -40,8 +55,13 @@ async function crear(req, res) {
     if (!contenido || !String(contenido).trim()) {
       return res.status(400).json({ mensaje: 'El contenido es obligatorio' });
     }
-    if (!categoria || !CATEGORIAS.includes(categoria)) {
-      return res.status(400).json({ mensaje: 'Categoría inválida' });
+    if (categorias.length === 0) {
+      return res.status(400).json({ mensaje: 'Debes seleccionar al menos una categoría válida' });
+    }
+    if (categorias.length > MAX_CATEGORIAS_POR_PUBLICACION) {
+      return res.status(400).json({
+        mensaje: `Puedes seleccionar como máximo ${MAX_CATEGORIAS_POR_PUBLICACION} categorías`
+      });
     }
     if (String(titulo).trim().length > LONGITUD_MAXIMA_TITULO) {
       return res.status(400).json({
@@ -52,7 +72,7 @@ async function crear(req, res) {
     const nueva = await Publicacion.create({
       titulo: String(titulo).trim(),
       contenido: String(contenido).trim(),
-      categoria,
+      categorias,
       idAutor: req.usuario._id,
       nombreAutor: req.usuario.nombreCompleto,
       fechaIso: new Date(),

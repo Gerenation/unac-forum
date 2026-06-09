@@ -7,6 +7,16 @@ import Message from '../components/ui/Message';
 import { useAuth } from '../context/AuthContext';
 import { actualizarPerfil } from '../services/authService';
 
+/**
+ * Página de edición del perfil del usuario autenticado.
+ *
+ * Funcionalidad cubierta: editar usuario (nombre, alias, correo y contraseña).
+ *
+ * Precondición: sesión activa; si se cambia contraseña, la actual debe ser correcta.
+ * Postcondición: datos persistidos en MongoDB y contexto de auth actualizado.
+ *
+ * @returns {JSX.Element} Formulario de perfil.
+ */
 export default function Perfil() {
   const navigate = useNavigate();
   const { usuario, refrescarUsuario } = useAuth();
@@ -19,6 +29,11 @@ export default function Perfil() {
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
 
+  /**
+   * Detecta cambios respecto al perfil actual y los envía al API.
+   *
+   * @param {import('react').FormEvent} e - Evento submit.
+   */
   async function manejarEnvio(e) {
     e.preventDefault();
     setError('');
@@ -83,7 +98,7 @@ export default function Perfil() {
             <h1>Mi perfil</h1>
             <p className="texto-ayuda">
               Actualiza tu información personal. Los cambios se guardan al pulsar
-              "Guardar cambios".
+              &quot;Guardar cambios&quot;.
             </p>
 
             <div className="campo-formulario">

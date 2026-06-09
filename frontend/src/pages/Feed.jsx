@@ -10,10 +10,29 @@ import {
   eliminarPublicacion,
   agregarComentario as svcAgregarComentario
 } from '../services/publicacionService';
-import { CATEGORIAS_DISPONIBLES, etiquetaCategoria, formatearFechaLegible } from '../constants/categorias';
+import {
+  CATEGORIAS_DISPONIBLES,
+  etiquetaCategoria,
+  formatearFechaLegible,
+  normalizarCategorias
+} from '../constants/categorias';
 
+/** Longitud máxima permitida para un comentario (sincronizado con el backend). */
 const MAX_LONGITUD_COMENTARIO = 500;
 
+/**
+ * Tarjeta individual de una publicación del foro con likes, comentarios y eliminación.
+ *
+ * @param {Object} props
+ * @param {Object} props.publicacion - Datos serializados de la publicación.
+ * @param {boolean} props.esAutor - True si el usuario en sesión creó esta publicación.
+ * @param {boolean} props.expandido - Si la sección de comentarios está visible.
+ * @param {Function} props.onToggleExpandido - Alterna visibilidad de comentarios.
+ * @param {Function} props.onToggleLike - Envía petición de like/unlike.
+ * @param {Function} props.onEliminar - Elimina la publicación (solo autor).
+ * @param {Function} props.onAgregarComentario - Publica un comentario nuevo.
+ * @returns {JSX.Element} Artículo HTML con la publicación completa.
+ */
 function PostCard({
   publicacion,
   esAutor,
@@ -28,9 +47,17 @@ function PostCard({
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const [eliminando, setEliminando] = useState(false);
 
+  const categorias = normalizarCategorias(
+    publicacion.categorias || publicacion.categoria
+  );
   const lineas = (publicacion.contenido || '').split('\n');
   const parrafos = lineas.filter((l) => l !== '');
 
+  /**
+   * Pide confirmación y elimina la publicación si el usuario acepta.
+   *
+   * Precondición: `esAutor` debe ser true (el botón solo se muestra al autor).
+   */
   function manejarEliminar() {
     const confirmado = window.confirm(
       `¿Eliminar la publicación "${publicacion.titulo}"? Esta acción no se puede deshacer.`
@@ -40,6 +67,11 @@ function PostCard({
     onEliminar(publicacion.id).finally(() => setEliminando(false));
   }
 
+  /**
+   * Valida y envía un comentario a la publicación.
+   *
+   * @param {import('react').FormEvent} e - Evento submit del formulario.
+   */
   async function manejarEnvioComentario(e) {
     e.preventDefault();
     setErrorComentario('');
@@ -90,9 +122,13 @@ function PostCard({
               {eliminando ? 'Eliminando…' : 'Eliminar'}
             </button>
           )}
-          <span className={`chip-categoria chip-categoria-${publicacion.categoria}`}>
-            {etiquetaCategoria(publicacion.categoria)}
-          </span>
+          <div className="tarjeta-post-categorias" aria-label="Categorías de la publicación">
+            {categorias.map((cat) => (
+              <span key={cat} className={`chip-categoria chip-categoria-${cat}`}>
+                {etiquetaCategoria(cat)}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
       <div className="tarjeta-post-cuerpo">
@@ -178,6 +214,16 @@ function PostCard({
   );
 }
 
+/**
+ * Página principal del foro: feed con búsqueda, filtro por categoría, likes y comentarios.
+ *
+ * Funcionalidades cubiertas: filtrar foros, dar like, comentar, eliminar foro (si es autor).
+ *
+ * Precondición: el usuario debe estar autenticado (ruta protegida).
+ * Postcondición: muestra publicaciones acordes a los filtros activos.
+ *
+ * @returns {JSX.Element} Vista completa del tablón de anuncios.
+ */
 export default function Feed() {
   const { usuario, logout } = useAuth();
   const [publicaciones, setPublicaciones] = useState([]);
@@ -187,6 +233,12 @@ export default function Feed() {
   const [categoria, setCategoria] = useState('todas');
   const [idExpandido, setIdExpandido] = useState(null);
 
+  /**
+   * Obtiene publicaciones del API aplicando filtros de texto y categoría.
+   *
+   * @param {{q?: string, categoria?: string}} filtros - Criterios de búsqueda.
+   * @returns {Promise<void>}
+   */
   async function cargar(filtros) {
     setCargando(true);
     setError('');
@@ -205,6 +257,11 @@ export default function Feed() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, categoria]);
 
+  /**
+   * Alterna el like del usuario sobre una publicación y actualiza el estado local.
+   *
+   * @param {string} id - ID de la publicación.
+   */
   async function manejarLike(id) {
     try {
       const actualizada = await svcToggleLike(id);
@@ -220,6 +277,11 @@ export default function Feed() {
     }
   }
 
+  /**
+   * Elimina una publicación del feed tras confirmación del usuario.
+   *
+   * @param {string} id - ID de la publicación a eliminar.
+   */
   async function manejarEliminar(id) {
     try {
       await eliminarPublicacion(id);
@@ -239,6 +301,12 @@ export default function Feed() {
     }
   }
 
+  /**
+   * Publica un comentario y refresca la tarjeta correspondiente en el estado.
+   *
+   * @param {string} id - ID de la publicación.
+   * @param {string} texto - Texto del comentario.
+   */
   async function manejarAgregarComentario(id, texto) {
     const actualizada = await svcAgregarComentario(id, texto);
     setPublicaciones((prev) =>
@@ -247,6 +315,11 @@ export default function Feed() {
     toast.success('Comentario publicado.');
   }
 
+  /**
+   * Expande o contrae el panel de comentarios de una publicación.
+   *
+   * @param {string} id - ID de la publicación.
+   */
   function alternarExpandido(id) {
     setIdExpandido((actual) => (actual === id ? null : id));
   }
@@ -290,7 +363,7 @@ export default function Feed() {
             />
           </div>
           <div className="grupo-filtro-categoria">
-            <label htmlFor="selectCategoria">Categoría</label>
+            <label htmlFor="selectCategoria">Filtrar por categoría</label>
             <select
               id="selectCategoria"
               name="selectCategoria"

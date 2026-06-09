@@ -1,7 +1,12 @@
-/* ======================================================================================================================
-   FUNCIONALIDAD 3 y 5 - acá va el Feed, tarjetas y botón de like 
-   Los “chips” de categoría usan fondos suaves azulados o medio amarillos.
-   ====================================================================================================================== */
+/* Feed: tarjetas de publicación, filtros, likes, comentarios y chips multi-categoría. */
+
+.tarjeta-post-categorias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  max-width: 100%;
+}
 
 body > main {
   padding-top: 2.5rem;
@@ -244,9 +249,12 @@ body > main {
   grid-column: 2 / 3;
   grid-row: 1 / 2;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
+  justify-content: flex-end;
   justify-self: end;
   align-self: start;
+  max-width: 100%;
 }
 
 .boton-eliminar {

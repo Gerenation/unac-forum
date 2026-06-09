@@ -5,7 +5,35 @@ const {
   PUBLICACIONES_INICIALES
 } = require('../utils/seedData');
 
+/**
+ * Convierte publicaciones antiguas con campo único `categoria` al nuevo arreglo `categorias`.
+ */
+async function migrarCategoriasLegacy() {
+  const legacy = await Publicacion.collection
+    .find({
+      categoria: { $exists: true, $ne: null },
+      $or: [{ categorias: { $exists: false } }, { categorias: { $size: 0 } }]
+    })
+    .toArray();
+
+  if (legacy.length === 0) return;
+
+  for (const doc of legacy) {
+    const categorias =
+      Array.isArray(doc.categorias) && doc.categorias.length > 0
+        ? doc.categorias
+        : [doc.categoria];
+    await Publicacion.collection.updateOne(
+      { _id: doc._id },
+      { $set: { categorias }, $unset: { categoria: '' } }
+    );
+  }
+  console.log(`🔄 Migradas ${legacy.length} publicación(es) al formato multi-categoría.`);
+}
+
 async function sembrarSiVacio() {
+  await migrarCategoriasLegacy();
+
   const totalUsuarios = await Usuario.countDocuments();
   const totalPublicaciones = await Publicacion.countDocuments();
 
@@ -18,7 +46,6 @@ async function sembrarSiVacio() {
 
   let usuariosCreados = [];
   if (totalUsuarios === 0) {
-    // Use .create() one at a time so the pre('save') bcrypt hook fires
     for (const datos of USUARIOS_DUMMY) {
       const u = await Usuario.create(datos);
       usuariosCreados.push(u);
@@ -34,13 +61,13 @@ async function sembrarSiVacio() {
       return {
         titulo: p.titulo,
         contenido: p.contenido,
-        categoria: p.categoria,
+        categorias: p.categorias,
         idAutor: autor._id,
         nombreAutor: p.nombreAutor,
         fechaIso: p.fechaIso,
-        idsUsuariosQueDieronLike: (p.likesIndice || []).map(
-          (idx) => usuariosCreados[idx]?._id
-        ).filter(Boolean)
+        idsUsuariosQueDieronLike: (p.likesIndice || [])
+          .map((idx) => usuariosCreados[idx]?._id)
+          .filter(Boolean)
       };
     });
     const publicacionesCreadas = await Publicacion.insertMany(docs);
@@ -48,4 +75,4 @@ async function sembrarSiVacio() {
   }
 }
 
-module.exports = { sembrarSiVacio };
+module.exports = { sembrarSiVacio, migrarCategoriasLegacy };

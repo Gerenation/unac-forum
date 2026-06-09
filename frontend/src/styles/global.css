@@ -123,6 +123,25 @@ a:hover {
   gap: 0.15rem;
 }
 
+.marca-sitio-con-logo {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.marca-sitio-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cargando-sesion {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--colorTextoSuave);
+}
+
 .marca-sitio-titulo {
   margin: 0;
   font-size: 1.35rem;
