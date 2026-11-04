@@ -15,7 +15,7 @@ import SiteBrand from '../components/layout/SiteBrand';
  * @returns {JSX.Element} Formulario de autenticación.
  */
 export default function Login() {
-  const { login, estaAutenticado, cargando } = useAuth();
+  const { login, estaAutenticado, cargando, usuario } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,12 +23,13 @@ export default function Login() {
     return () => document.body.classList.remove('layout-centrado');
   }, []);
 
-  /** Si ya hay sesión activa, envía al feed sin pedir credenciales de nuevo. */
+  /** Si ya hay sesión activa, envía al panel correcto según el rol. */
   useEffect(() => {
     if (!cargando && estaAutenticado) {
-      navigate('/explorar', { replace: true });
+      const destino = usuario?.rol === 'admin' ? '/admin' : '/explorar';
+      navigate(destino, { replace: true });
     }
-  }, [cargando, estaAutenticado, navigate]);
+  }, [cargando, estaAutenticado, navigate, usuario]);
 
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -49,8 +50,10 @@ export default function Login() {
     }
     setEnviando(true);
     try {
-      await login(correo.trim(), contrasena);
-      setTimeout(() => navigate('/explorar'), 400);
+      const usuario = await login(correo.trim(), contrasena);
+      // Los administradores van al panel de administración, los usuarios al foro normal
+      const destino = usuario.rol === 'admin' ? '/admin' : '/explorar';
+      setTimeout(() => navigate(destino, { replace: true }), 400);
     } catch (err) {
       const mensaje = err.response?.data?.mensaje || 'No se pudo iniciar sesión.';
       setError(mensaje);

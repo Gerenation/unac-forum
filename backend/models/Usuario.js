@@ -27,6 +27,24 @@ const usuarioSchema = new mongoose.Schema(
       required: [true, 'La contraseña es obligatoria'],
       minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
       select: false
+    },
+    rol: {
+      type: String,
+      enum: ['usuario', 'admin'],
+      default: 'usuario',
+      required: true
+    },
+    baneado: {
+      type: Boolean,
+      default: false
+    },
+    fechaBaneo: {
+      type: Date
+    },
+    razonBaneo: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'La razón no puede superar 500 caracteres']
     }
   },
   { timestamps: true }

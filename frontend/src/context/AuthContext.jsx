@@ -28,7 +28,14 @@ export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(() => {
     try {
       const texto = localStorage.getItem(CLAVE_USUARIO);
-      return texto ? JSON.parse(texto) : null;
+      if (!texto) return null;
+      const datos = JSON.parse(texto);
+      // Migración: usuarios cacheados sin el campo `rol` se asumen como 'usuario'
+      if (datos && !datos.rol) {
+        datos.rol = 'usuario';
+        localStorage.setItem(CLAVE_USUARIO, JSON.stringify(datos));
+      }
+      return datos;
     } catch {
       return null;
     }

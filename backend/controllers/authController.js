@@ -34,7 +34,8 @@ async function registrar(req, res) {
       nombreCompleto,
       nombreUsuario,
       correo,
-      contrasena
+      contrasena,
+      rol: 'usuario'
     });
 
     const token = firmarToken(nuevoUsuario._id);
@@ -50,6 +51,55 @@ async function registrar(req, res) {
       return res.status(400).json({ mensaje: error.message });
     }
     console.error('Error en registrar:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+/**
+ * Lista todos los usuarios (solo administradores).
+ * Devuelve id, nombreCompleto, nombreUsuario, correo y rol de cada usuario.
+ */
+async function listarUsuarios(req, res) {
+  try {
+    const usuarios = await Usuario.find({}, '-contrasena').sort({ nombreCompleto: 1 });
+    return res.json({ usuarios: usuarios.map((u) => usuarioPublico(u)) });
+  } catch (error) {
+    console.error('Error en listarUsuarios:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+/**
+ * Cambia el rol de un usuario (solo administradores).
+ * Body: { rol: 'usuario' | 'admin' }
+ */
+async function cambiarRolUsuario(req, res) {
+  try {
+    const { id } = req.params;
+    const { rol } = req.body || {};
+
+    if (!rol || !['usuario', 'admin'].includes(rol)) {
+      return res.status(400).json({ mensaje: "El rol debe ser 'usuario' o 'admin'" });
+    }
+
+    // No permitirse a uno mismo quitarse el rol de admin
+    if (String(id) === String(req.usuario._id) && rol !== 'admin') {
+      return res.status(400).json({ mensaje: 'No puedes quitarte tu propio rol de administrador' });
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(
+      id,
+      { rol },
+      { new: true, select: '-contrasena' }
+    );
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    return res.json({ mensaje: `Rol actualizado a ${rol}`, usuario: usuarioPublico(usuario) });
+  } catch (error) {
+    console.error('Error en cambiarRolUsuario:', error);
     return res.status(500).json({ mensaje: 'Error interno del servidor' });
   }
 }
@@ -181,4 +231,86 @@ function escapeRegex(texto) {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-module.exports = { registrar, login, obtenerPerfil, actualizarPerfil };
+/**
+ * Banea temporalmente a un usuario (solo administradores).
+ * Body: { razon: string }
+ */
+async function banearUsuario(req, res) {
+  try {
+    const { id } = req.params;
+    const { razon } = req.body || {};
+
+    if (!razon || String(razon).trim().length === 0) {
+      return res.status(400).json({ mensaje: 'La razón del baneo es obligatoria' });
+    }
+
+    // No permitirse a uno mismo banearse
+    if (String(id) === String(req.usuario._id)) {
+      return res.status(400).json({ mensaje: 'No puedes banearte a ti mismo' });
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(
+      id,
+      {
+        baneado: true,
+        fechaBaneo: new Date(),
+        razonBaneo: String(razon).trim()
+      },
+      { new: true, select: '-contrasena' }
+    );
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    return res.json({
+      mensaje: 'Usuario baneado exitosamente',
+      usuario: usuarioPublico(usuario)
+    });
+  } catch (error) {
+    console.error('Error en banearUsuario:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+/**
+ * Desbanea a un usuario (solo administradores).
+ */
+async function desbanearUsuario(req, res) {
+  try {
+    const { id } = req.params;
+
+    const usuario = await Usuario.findByIdAndUpdate(
+      id,
+      {
+        baneado: false,
+        fechaBaneo: null,
+        razonBaneo: null
+      },
+      { new: true, select: '-contrasena' }
+    );
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    return res.json({
+      mensaje: 'Usuario desbaneado exitosamente',
+      usuario: usuarioPublico(usuario)
+    });
+  } catch (error) {
+    console.error('Error en desbanearUsuario:', error);
+    return res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+}
+
+module.exports = {
+  registrar,
+  login,
+  obtenerPerfil,
+  actualizarPerfil,
+  listarUsuarios,
+  cambiarRolUsuario,
+  banearUsuario,
+  desbanearUsuario
+};

@@ -22,7 +22,13 @@ function usuarioPublico(doc) {
     id: String(doc._id),
     nombreCompleto: doc.nombreCompleto,
     nombreUsuario: doc.nombreUsuario,
-    correo: doc.correo
+    correo: doc.correo,
+    rol: doc.rol || 'usuario',
+    baneado: doc.baneado || false,
+    fechaBaneo: doc.fechaBaneo,
+    razonBaneo: doc.razonBaneo,
+    creadoEn: doc.createdAt,
+    actualizadoEn: doc.updatedAt
   };
 }
 

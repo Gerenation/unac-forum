@@ -244,3 +244,971 @@ a:hover {
   gap: 0.5rem;
   align-items: center;
 }
+
+/* Badge de rol "admin" mostrado junto al nombre del usuario en la cabecera. */
+.badge-rol-admin {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: var(--colorAcento);
+  color: var(--colorAcentoOscuro);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+/* ============================ ADMIN ============================ */
+
+.contenido-admin {
+  width: var(--anchoContenido);
+  margin: 0 auto 3rem;
+}
+
+.contenido-admin h1 {
+  font-size: 1.5rem;
+  color: var(--colorPrimario);
+  margin: 0 0 0.5rem;
+}
+
+.descripcion-admin {
+  font-size: 0.95rem;
+  color: var(--colorTextoSuave);
+  margin: 0 0 1.5rem;
+}
+
+.nota-admin {
+  font-size: 0.85rem;
+  color: var(--colorTextoSuave);
+  margin-top: 1.5rem;
+}
+
+.celda-vacia {
+  text-align: center;
+  color: var(--colorTextoSuave);
+  padding: 1.5rem;
+}
+
+/* Tabla de usuarios */
+.tabla-usuarios-envoltura {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.tabla-usuarios {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--colorSuperficie);
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioGrande);
+  overflow: hidden;
+}
+
+.tabla-usuarios th {
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTextoSuave);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--colorBorde);
+}
+
+.tabla-usuarios td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--colorBorde);
+  font-size: 0.9rem;
+  color: var(--colorTexto);
+}
+
+.tabla-usuarios tr:last-child td {
+  border-bottom: none;
+}
+
+.tabla-usuarios tr:hover td {
+  background: rgba(142, 197, 255, 0.05);
+}
+
+.select-rol {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTexto);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.select-rol:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Badges de rol en la tabla */
+.badge-rol {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.badge-rol-admin {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.badge-rol-usuario {
+  background: rgba(142, 197, 255, 0.12);
+  color: var(--colorPrimarioSuave);
+}
+
+.texto-protegido {
+  font-size: 0.75rem;
+  color: var(--colorTextoSuave);
+  font-style: italic;
+}
+
+.texto-cargando {
+  font-size: 0.75rem;
+  color: var(--colorTextoSuave);
+  font-style: italic;
+}
+
+/* Tarjeta de moderación */
+.tarjeta-post-moderada {
+  border-left: 4px solid var(--colorAcento);
+}
+
+.etiqueta-moderacion {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--colorAcento);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.boton-eliminar-admin {
+  background: rgba(255, 138, 128, 0.12);
+  border-color: var(--colorError);
+  color: var(--colorError);
+}
+
+.boton-eliminar-admin:hover {
+  background: rgba(255, 138, 128, 0.25);
+}
+
+/* ===================== ADMIN DASHBOARD (DISEÑO DIFERENCIADO) ===================== */
+
+.admin-dashboard {
+  display: flex;
+  min-height: calc(100vh - 60px);
+  background: var(--colorFondo);
+}
+
+/* Barra lateral */
+.admin-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #0a0e16 0%, #121a28 100%);
+  border-right: 1px solid var(--colorBorde);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.admin-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(142, 197, 255, 0.15);
+}
+
+.admin-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--colorAcento), var(--colorPrimarioSuave));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--colorAcentoOscuro);
+  box-shadow: 0 4px 12px rgba(232, 197, 71, 0.3);
+}
+
+.admin-titulo-marca {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-titulo-marca strong {
+  font-size: 1.1rem;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.admin-subtitulo {
+  font-size: 0.7rem;
+  color: var(--colorPrimarioSuave);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.1rem;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 2rem;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radioMedio);
+  border: none;
+  background: transparent;
+  color: var(--colorTextoSuave);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.admin-nav-item:hover {
+  background: rgba(142, 197, 255, 0.1);
+  color: #fff;
+}
+
+.admin-nav-item-activo {
+  background: linear-gradient(90deg, rgba(232, 197, 71, 0.15), transparent);
+  color: var(--colorAcentoHover);
+  border-left: 3px solid var(--colorAcento);
+}
+
+.admin-usuario-actual {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(142, 197, 255, 0.1);
+}
+
+.admin-usuario-info {
+  margin-bottom: 1rem;
+}
+
+.admin-usuario-nombre {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.2rem;
+}
+
+.admin-usuario-rol-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-usuario-rol-badge.rol-admin {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.admin-usuario-rol-badge.rol-usuario {
+  background: rgba(142, 197, 255, 0.12);
+  color: var(--colorPrimarioSuave);
+}
+
+.admin-boton-cerrar {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid var(--colorBorde);
+  background: transparent;
+  color: var(--colorTextoSuave);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-boton-cerrar:hover {
+  background: rgba(255, 138, 128, 0.1);
+  color: var(--colorError);
+  border-color: rgba(255, 138, 128, 0.4);
+}
+
+/* Contenido principal */
+.admin-contenido {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background: var(--colorFondo);
+}
+
+.admin-header {
+  margin-bottom: 2rem;
+}
+
+.admin-titulo-pagina {
+  font-size: 1.75rem;
+  color: var(--colorPrimario);
+  margin: 0 0 0.5rem;
+}
+
+.admin-subtitulo-pagina {
+  font-size: 1rem;
+  color: var(--colorTextoSuave);
+  margin: 0;
+}
+
+/* Resumen */
+.admin-resumen {
+  margin-bottom: 2rem;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-stat-card {
+  background: var(--colorSuperficie);
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioGrande);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--colorPrimarioSuave);
+}
+
+.admin-stat-card-admins {
+  border-left: 4px solid var(--colorAcento);
+}
+
+.admin-stat-card-posts {
+  border-left: 4px solid var(--colorPrimario);
+}
+
+.admin-stat-card-comentarios {
+  border-left: 4px solid var(--colorAcentoHover);
+}
+
+.admin-stat-valor {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.admin-stat-etiqueta {
+  font-size: 0.8rem;
+  color: var(--colorTextoSuave);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-acciones-rapidas {
+  background: var(--colorSuperficie);
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioGrande);
+  padding: 1.5rem;
+}
+
+.admin-acciones-rapidas h2 {
+  font-size: 1.1rem;
+  color: #fff;
+  margin: 0 0 1rem;
+}
+
+.admin-botones-rapidos {
+  display: flex;
+  gap: 1rem;
+}
+
+.admin-boton-rapido {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radioMedio);
+  border: none;
+  background: var(--colorSuperficieElevada);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-boton-rapido:hover {
+  background: rgba(142, 197, 255, 0.15);
+  border-color: var(--colorPrimarioSuave);
+}
+
+.admin-boton-rapido-usuarios {
+  border-left: 4px solid var(--colorPrimarioSuave);
+}
+
+.admin-boton-rapido-moderar {
+  border-left: 4px solid var(--colorAcento);
+}
+
+/* Secciones */
+.admin-seccion-usuarios,
+.admin-seccion-moderar {
+  margin-bottom: 2rem;
+}
+
+.admin-barra-acciones {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-barra-acciones h2 {
+  font-size: 1.3rem;
+  color: #fff;
+  margin: 0;
+}
+
+.admin-descripcion-seccion {
+  font-size: 0.9rem;
+  color: var(--colorTextoSuave);
+  margin: 0.5rem 0 0;
+  max-width: 600px;
+}
+
+/* Tabla de usuarios */
+.admin-tabla-envoltura {
+  overflow-x: auto;
+  background: var(--colorSuperficie);
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioGrande);
+  overflow: hidden;
+}
+
+.admin-tabla-usuarios {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+}
+
+.admin-tabla-usuarios th {
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTextoSuave);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--colorBorde);
+  white-space: nowrap;
+}
+
+.admin-tabla-usuarios td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--colorBorde);
+  color: var(--colorTexto);
+  white-space: nowrap;
+}
+
+.admin-tabla-usuarios tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-tabla-usuarios tr:hover td {
+  background: rgba(142, 197, 255, 0.06);
+}
+
+.admin-usuario-nombre-tabla {
+  font-weight: 600;
+  color: var(--colorPrimario);
+}
+
+.admin-badge-rol {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-badge-rol-admin {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.admin-badge-rol-usuario {
+  background: rgba(142, 197, 255, 0.12);
+  color: var(--colorPrimarioSuave);
+}
+
+.admin-select-rol {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTexto);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.admin-select-rol:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-texto-protegido {
+  font-size: 0.75rem;
+  color: var(--colorTextoSuave);
+  font-style: italic;
+}
+
+.admin-texto-cargando {
+  font-size: 0.75rem;
+  color: var(--colorTextoSuave);
+  font-style: italic;
+}
+
+.admin-celda-vacia {
+  text-align: center;
+  color: var(--colorTextoSuave);
+  padding: 2rem;
+}
+
+.admin-celda-cargando {
+  text-align: center;
+  color: var(--colorTextoSuave);
+  padding: 2rem;
+}
+
+.admin-nota {
+  font-size: 0.8rem;
+  color: var(--colorTextoSuave);
+  margin-top: 1rem;
+}
+
+/* Filtros de publicaciones */
+.admin-filtros-posts {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  background: var(--colorSuperficie);
+  padding: 1rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid var(--colorBorde);
+}
+
+.admin-grupo-busqueda,
+.admin-grupo-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-grupo-busqueda {
+  flex: 1;
+  min-width: 200px;
+}
+
+.admin-grupo-filtro {
+  min-width: 180px;
+}
+
+.admin-grupo-busqueda label,
+.admin-grupo-filtro label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--colorTextoSuave);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-grupo-busqueda input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTexto);
+}
+
+.admin-grupo-busqueda input:focus {
+  outline: none;
+  border-color: var(--colorPrimarioSuave);
+}
+
+.admin-grupo-filtro select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioMedio);
+  font: inherit;
+  background: var(--colorSuperficieElevada);
+  color: var(--colorTexto);
+  cursor: pointer;
+}
+
+/* Lista de publicaciones para moderar */
+.admin-lista-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-tarjeta-post {
+  background: var(--colorSuperficie);
+  border: 1px solid var(--colorBorde);
+  border-radius: var(--radioGrande);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-tarjeta-post:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sombraSuave);
+  border-color: var(--colorPrimarioSuave);
+}
+
+.admin-tarjeta-encabezado {
+  padding: 1rem 1.25rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.admin-tarjeta-titulo {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--colorPrimario);
+  flex: 1;
+}
+
+.admin-badge-categoria {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.admin-badge-categoria-convocatoria { background: rgba(100, 180, 255, 0.18); color: #9fd4ff; }
+.admin-badge-categoria-evento { background: rgba(232, 197, 71, 0.15); color: var(--colorAcentoHover); }
+.admin-badge-categoria-alertaAcademica { background: rgba(255, 160, 100, 0.14); color: #ffb89a; }
+.admin-badge-categoria-bienestar { background: rgba(125, 216, 122, 0.14); color: var(--colorExito); }
+.admin-badge-categoria-tecnologia { background: rgba(120, 170, 255, 0.18); color: #a8c4ff; }
+.admin-badge-categoria-deportes { background: rgba(255, 120, 120, 0.14); color: #ff9e9e; }
+.admin-badge-categoria-cultura { background: rgba(200, 150, 255, 0.14); color: #d4b8ff; }
+.admin-badge-categoria-general { background: rgba(232, 237, 244, 0.08); color: var(--colorTextoSuave); }
+.admin-badge-categoria-socializacion { background: rgba(255, 160, 200, 0.14); color: #ffb8d4; }
+
+.admin-tarjeta-meta {
+  padding: 0 1.25rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--colorTextoSuave);
+}
+
+.admin-tarjeta-autor {
+  font-weight: 600;
+  color: var(--colorPrimarioSuave);
+}
+
+.admin-tarjeta-separador {
+  margin: 0 0.25rem;
+  color: var(--colorBorde);
+}
+
+.admin-tarjeta-fecha {
+  font-size: 0.8rem;
+}
+
+.admin-tarjeta-stats {
+  font-weight: 500;
+  color: var(--colorTexto);
+}
+
+.admin-tarjeta-contenido {
+  padding: 0 1.25rem 1rem;
+  font-size: 0.9rem;
+  color: var(--colorTexto);
+  line-height: 1.5;
+}
+
+.admin-tarjeta-contenido p {
+  margin: 0 0 0.5rem;
+}
+
+.admin-tarjeta-pie {
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--colorBorde);
+  background: rgba(22, 29, 42, 0.6);
+}
+
+.admin-boton-eliminar {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid var(--colorError);
+  background: rgba(255, 138, 128, 0.1);
+  color: var(--colorError);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-boton-eliminar:hover:not(:disabled) {
+  background: rgba(255, 138, 128, 0.2);
+  border-color: var(--colorError);
+}
+
+.admin-boton-eliminar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mensajes */
+.Message {
+  /* asegurarse de que los toasts de react-hot-toast no choquen con el diseño admin */
+}
+
+/* Iconos de texto (sin emojis) para la navegación del admin */
+.icon-resumen,
+.icon-usuarios,
+.icon-moderar,
+.icon-usuarios-rapido,
+.icon-moderar-rapido,
+.icon-comentarios {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.icon-resumen {
+  background: rgba(142, 197, 255, 0.15);
+  color: var(--colorPrimarioSuave);
+}
+
+.icon-usuarios {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.icon-moderar {
+  background: rgba(255, 138, 128, 0.15);
+  color: var(--colorError);
+}
+
+.icon-usuarios-rapido {
+  background: rgba(232, 197, 71, 0.15);
+  color: var(--colorAcentoHover);
+}
+
+.icon-moderar-rapido {
+  background: rgba(255, 138, 128, 0.15);
+  color: var(--colorError);
+}
+
+.icon-comentarios {
+  background: rgba(142, 197, 255, 0.12);
+  color: var(--colorPrimario);
+  font-size: 0.7rem;
+  margin-right: 0.35rem;
+}
+
+/* Estados de usuario en tabla de admin */
+.admin-estado-activo {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(125, 216, 122, 0.15);
+  color: var(--colorExito);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-estado-baneado {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 138, 128, 0.15);
+  color: var(--colorError);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Botones de baneo */
+.admin-boton-banear {
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid var(--colorError);
+  background: rgba(255, 138, 128, 0.1);
+  color: var(--colorError);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-boton-banear:hover:not(:disabled) {
+  background: rgba(255, 138, 128, 0.2);
+  border-color: var(--colorError);
+}
+
+.admin-boton-banear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-boton-desbanear {
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radioMedio);
+  border: 1px solid var(--colorExito);
+  background: rgba(125, 216, 122, 0.1);
+  color: var(--colorExito);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-boton-desbanear:hover:not(:disabled) {
+  background: rgba(125, 216, 122, 0.2);
+  border-color: var(--colorExito);
+}
+
+.admin-boton-desbanear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-razon-baneo {
+  font-size: 0.7rem;
+  color: var(--colorTextoSuave);
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Stat card para usuarios baneados */
+.admin-stat-card-baneados {
+  border-left: 4px solid var(--colorError);
+}
+
+/* Sección de comentarios en tarjeta de moderación */
+.admin-comentarios-seccion {
+  padding: 0 1.25rem 1rem;
+  border-top: 1px solid var(--colorBorde);
+  background: rgba(13, 17, 24, 0.3);
+}
+
+.admin-comentarios-titulo {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--colorPrimario);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-comentarios-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-comentario-item {
+  padding: 0.75rem;
+  background: var(--colorSuperficieElevada);
+  border-radius: var(--radioMedio);
+  border: 1px solid rgba(142, 197, 255, 0.1);
+}
+
+.admin-comentario-autor {
+  display: block;
+  font-weight: 700;
+  color: var(--colorPrimarioSuave);
+  font-size: 0.85rem;
+  margin-bottom: 0.15rem;
+}
+
+.admin-comentario-fecha {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--colorTextoSuave);
+  margin-bottom: 0.4rem;
+}
+
+.admin-comentario-texto {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--colorTexto);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}

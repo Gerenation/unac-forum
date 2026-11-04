@@ -37,10 +37,20 @@ export default function Header({ subtitulo, navLinks = [], navLabel = 'Navegaci�
           {subtitulo === 'Tablón de anuncios y temas de interés' ? (
             <span className="texto-usuario-activo">
               Hola, <strong>{usuario?.nombreCompleto}</strong>
+              {usuario?.rol === 'admin' && (
+                <span className="badge-rol-admin" title="Usuario con rol de administrador">
+                  admin
+                </span>
+              )}
             </span>
           ) : (
             <span className="texto-usuario-activo">
               <strong>{usuario?.nombreCompleto}</strong>
+              {usuario?.rol === 'admin' && (
+                <span className="badge-rol-admin" title="Usuario con rol de administrador">
+                  admin
+                </span>
+              )}
             </span>
           )}
           <nav className="nav-cabecera-feed" aria-label={navLabel}>

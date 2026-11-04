@@ -15,7 +15,7 @@ import SiteBrand from '../components/layout/SiteBrand';
  * @returns {JSX.Element} Formulario de registro.
  */
 export default function Registro() {
-  const { registro, estaAutenticado, cargando } = useAuth();
+  const { registro, estaAutenticado, cargando, usuario } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,11 +23,13 @@ export default function Registro() {
     return () => document.body.classList.remove('layout-centrado');
   }, []);
 
+  /** Los registros nuevos siempre son rol 'usuario', van al foro normal. */
   useEffect(() => {
     if (!cargando && estaAutenticado) {
-      navigate('/explorar', { replace: true });
+      const destino = usuario?.rol === 'admin' ? '/admin' : '/explorar';
+      navigate(destino, { replace: true });
     }
-  }, [cargando, estaAutenticado, navigate]);
+  }, [cargando, estaAutenticado, navigate, usuario]);
 
   const [nombreCompleto, setNombreCompleto] = useState('');
   const [nombreUsuario, setNombreUsuario] = useState('');
@@ -61,13 +63,14 @@ export default function Registro() {
 
     setEnviando(true);
     try {
-      await registro({
+      const usuario = await registro({
         nombreCompleto: nombreCompleto.trim(),
         nombreUsuario: nombreUsuario.trim(),
         correo: correo.trim(),
         contrasena
       });
-      setTimeout(() => navigate('/explorar'), 400);
+      const destino = usuario.rol === 'admin' ? '/admin' : '/explorar';
+      setTimeout(() => navigate(destino, { replace: true }), 400);
     } catch (err) {
       const mensaje = err.response?.data?.mensaje || 'No se pudo crear la cuenta.';
       setError(mensaje);

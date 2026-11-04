@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../context/AuthContext';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import AdminRoute from '../components/auth/AdminRoute';
 import Login from '../pages/Login';
 import Registro from '../pages/Registro';
 import Feed from '../pages/Feed';
 import NuevaPublicacion from '../pages/NuevaPublicacion';
 import Perfil from '../pages/Perfil';
 import Landing from '../pages/Landing';
+import AdminDashboard from '../pages/AdminDashboard';
 
 /**
  * Componente raíz de la aplicación React: enrutamiento y proveedor de autenticación.
@@ -62,6 +64,16 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route path="/admin/usuarios" element={<Navigate to="/admin" replace />} />
+          <Route path="/admin/moderar" element={<Navigate to="/admin" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

@@ -65,3 +65,60 @@ export async function actualizarPerfil(datos) {
   const { data } = await api.post('/auth/perfil', datos);
   return data;
 }
+
+/**
+ * Lista todos los usuarios del foro (solo administradores).
+ *
+ * Precondición: el usuario autenticado debe tener rol 'admin'.
+ * Postcondición: retorna arreglo de usuarios con id, nombreCompleto, nombreUsuario, correo y rol.
+ *
+ * @returns {Promise<{usuarios: Object[]}>} Listado de usuarios registrados.
+ */
+export async function listarUsuarios() {
+  const { data } = await api.get('/auth/usuarios');
+  return data;
+}
+
+/**
+ * Cambia el rol de un usuario (solo administradores).
+ *
+ * Precondición: el usuario autenticado debe tener rol 'admin'; `id` debe existir.
+ * Postcondición: el rol del usuario objetivo se actualiza en la base de datos.
+ *
+ * @param {string} id - Identificador del usuario cuyo rol se modificará.
+ * @param {'usuario' | 'admin'} rol - Nuevo rol a asignar.
+ * @returns {Promise<{mensaje: string, usuario: Object}>} Resultado de la operación.
+ */
+export async function cambiarRolUsuario(id, rol) {
+  const { data } = await api.post(`/auth/usuarios/${id}/rol`, { rol });
+  return data;
+}
+
+/**
+ * Banea temporalmente a un usuario (solo administradores).
+ *
+ * Precondición: el usuario autenticado debe tener rol 'admin'; `id` debe existir.
+ * Postcondición: el usuario queda marcado como baneado con razón y fecha.
+ *
+ * @param {string} id - Identificador del usuario a banear.
+ * @param {string} razon - Razón del baneo.
+ * @returns {Promise<{mensaje: string, usuario: Object}>} Resultado de la operación.
+ */
+export async function banearUsuario(id, razon) {
+  const { data } = await api.post(`/auth/usuarios/${id}/banear`, { razon });
+  return data;
+}
+
+/**
+ * Desbanea a un usuario (solo administradores).
+ *
+ * Precondición: el usuario autenticado debe tener rol 'admin'; `id` debe existir.
+ * Postcondición: el usuario queda desbaneado y puede acceder nuevamente.
+ *
+ * @param {string} id - Identificador del usuario a desbanear.
+ * @returns {Promise<{mensaje: string, usuario: Object}>} Resultado de la operación.
+ */
+export async function desbanearUsuario(id) {
+  const { data } = await api.post(`/auth/usuarios/${id}/desbanear`);
+  return data;
+}

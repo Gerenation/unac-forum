@@ -135,7 +135,10 @@ async function eliminar(req, res) {
       return res.status(404).json({ mensaje: 'Publicación no encontrada' });
     }
 
-    if (String(publicacion.idAutor) !== String(usuarioId)) {
+    const esAutor = String(publicacion.idAutor) === String(usuarioId);
+    const esAdmin = req.usuario.rol === 'admin';
+
+    if (!esAutor && !esAdmin) {
       return res.status(403).json({ mensaje: 'No autorizado para eliminar esta publicación' });
     }
 

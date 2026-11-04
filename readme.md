@@ -29,7 +29,7 @@
 | Frontend | React 18, Vite 5, react-router-dom v6, axios, react-hot-toast |
 | Backend | Node.js, Express 4, Mongoose 8, JWT, bcryptjs, CORS, dotenv |
 | Base de datos | MongoDB (local en `mongodb://127.0.0.1:27017/unac_forum`) |
-| Lanzador | `run_project.bat` (Windows) |
+| Lanzador | `run_project.bat` (Windows) / `run_project.sh` (Linux) |
 
 ### Características principales
 
@@ -51,12 +51,18 @@
 - **Responsive** con flexbox y grid.
 - **Datos demo** sembrados automáticamente al primer arranque.
 - **Migración automática** de publicaciones antiguas con campo único `categoria` → arreglo `categorias`.
+- **Panel de administración** (`/admin`) con diseño diferenciado (barra lateral, sin emojis):
+  - **Resumen**: estadísticas del foro (usuarios, admins, usuarios baneados, publicaciones, likes, comentarios).
+  - **Gestión de usuarios**: listar todos los usuarios, cambiar rol (usuario/admin), banear temporalmente con razón, desbanear.
+  - **Moderación de publicaciones**: ver todas las publicaciones con comentarios, búsqueda, filtro por categoría, eliminar cualquier publicación.
+- **Rol de administrador**: usuarios con rol `admin` acceden al panel `/admin`, no pueden usar rutas normales del foro (`/explorar`, `/nueva-publicacion`, `/perfil`).
+- **Baneo de usuarios**: campo `baneado`, `fechaBaneo`, `razonBaneo` en el esquema de usuario; usuarios baneados reciben 403 en todas las peticiones API.
 
 ---
 
 ## 2. Funcionalidades del proyecto
 
-El proyecto documenta **14 funcionalidades** (8 principales + 6 secundarias). Detalle ampliado en [`frontend/FUNCIONALIDADES.md`](frontend/FUNCIONALIDADES.md).
+El proyecto documenta **18 funcionalidades** (8 principales + 6 secundarias + 4 de administración). Detalle ampliado en [`frontend/FUNCIONALIDADES.md`](frontend/FUNCIONALIDADES.md).
 
 ### Funcionalidades principales
 
@@ -81,6 +87,15 @@ El proyecto documenta **14 funcionalidades** (8 principales + 6 secundarias). De
 | 12 | Multi-categoría en publicaciones (1–5) | `NuevaPublicacion.jsx`, `Feed.jsx`, `categorias.js` |
 | 13 | Notificaciones toast | `App.jsx`, páginas con `react-hot-toast` |
 | 14 | Logo UNAC en cabeceras | `SiteBrand.jsx`, `Header.jsx`, `assets/logo.svg` |
+
+### Funcionalidades de administración
+
+| # | Funcionalidad | Archivos clave |
+|---|---|---|
+| 15 | Panel de administración (`/admin`) con diseño diferenciado | `AdminDashboard.jsx`, `AdminRoute.jsx`, `global.css` |
+| 16 | Gestión de usuarios: listar, cambiar rol, banear/desbanear | `AdminDashboard.jsx`, `authService.js`, `authController.js`, `authRoutes.js` |
+| 17 | Moderación de publicaciones: ver comentarios, eliminar cualquier post | `AdminDashboard.jsx`, `publicacionService.js`, `publicacionController.js` |
+| 18 | Redirección por rol: admin → `/admin`, usuario → `/explorar` | `Login.jsx`, `Registro.jsx`, `ProtectedRoute.jsx`, `AdminRoute.jsx` |
 
 ### Precondiciones y postcondiciones (resumen)
 
@@ -123,7 +138,18 @@ Doble clic en `run_project.bat`. El script:
 5. Abre dos ventanas: **UNAC Forum Backend** y **UNAC Forum Frontend**.
 6. El navegador se abre en `http://localhost:5173/`.
 
-### Opción B — Dos terminales manuales
+### Opción B — Lanzador automático (Linux / Arch-based)
+
+Ejecuta `./run_project.sh` (o `bash run_project.sh`) desde la carpeta `unac-forum/`. El script:
+
+1. Usa Node.js local si no está en PATH.
+2. Inicia MongoDB en un contenedor Docker (`mongo:7`).
+3. Instala dependencias en `backend/` y `frontend/` si faltan.
+4. Copia `backend/.env.example` → `backend/.env` si no existe.
+5. Abre dos ventanas de terminal (konsole/kitty/alacritty): una para el backend y otra para el frontend.
+6. El navegador se abre en `http://localhost:5173/`.
+
+### Opción C — Dos terminales manuales
 
 **Terminal 1 (backend)**:
 
@@ -155,10 +181,11 @@ npm run preview
 
 ### Credenciales de demostración
 
-| Correo | Contraseña |
-|---|---|
-| `pepito.perez@estudiantes.unac.edu` | `demo123` |
-| `fulano.de.tal@estudiantes.unac.edu` | `demo123` |
+| Rol | Correo | Contraseña | Destino al entrar |
+|---|---|---|---|
+| Administrador | `admin@unac.edu` | `admin123` | `/admin` (panel de administración) |
+| Usuario | `pepito.perez@estudiantes.unac.edu` | `demo123` | `/explorar` (foro normal) |
+| Usuario | `fulano.de.tal@estudiantes.unac.edu` | `demo123` | `/explorar` (foro normal) |
 
 ---
 
@@ -170,6 +197,7 @@ unac-forum-actualizado/
 │   └── logo.svg                    # Logo fuente (copiado a frontend/src/assets/)
 └── unac-forum/
     ├── run_project.bat
+    ├── run_project.sh
     ├── readme.md
     │
     ├── backend/                    # API REST
@@ -180,51 +208,55 @@ unac-forum-actualizado/
     │   ├── controllers/
     │   │   ├── authController.js
     │   │   └── publicacionController.js
-    │   ├── middleware/auth.js
+    │   ├── middleware/
+    │   │   └── auth.js             # autenticar + esAdmin + verificación de baneo
     │   ├── models/
-    │   │   ├── Usuario.js
+    │   │   ├── Usuario.js          # rol, baneado, fechaBaneo, razonBaneo
     │   │   └── Publicacion.js
     │   ├── routes/
-    │   │   ├── authRoutes.js
+    │   │   ├── authRoutes.js       # incluye /usuarios, /usuarios/:id/rol, /usuarios/:id/banear, /usuarios/:id/desbanear
     │   │   └── publicacionRoutes.js
-    │   ├── services/seedService.js
+    │   ├── services/seedService.js # migrarCategoriasLegacy, migrarRolesUsuarios, sembrarSiVacio
     │   └── utils/
-    │       ├── seedData.js
-    │       └── serializers.js
+    │       ├── seedData.js         # 8 usuarios demo, 8 publicaciones demo
+    │       └── serializers.js      # usuarioPublico incluye rol, baneado, fechas
     │
     └── frontend/                   # SPA React
-        ├── FUNCIONALIDADES.md      # Documentación de las 14 funcionalidades
+        ├── FUNCIONALIDADES.md      # Documentación de las 18 funcionalidades
         ├── vite.config.js
         ├── index.html
         └── src/
             ├── main.jsx
-            ├── app/App.jsx
+            ├── app/App.jsx         # incluye rutas /admin y redirecciones por rol
             ├── assets/
             │   ├── logo.svg        # Logo en cabeceras
             │   ├── Fondo.png       # Fondo landing
             │   └── Friends.png     # Ilustración hero landing
             ├── components/
-            │   ├── auth/ProtectedRoute.jsx
+            │   ├── auth/
+            │   │   ├── ProtectedRoute.jsx   # redirige admin a /admin
+            │   │   └── AdminRoute.jsx       # protege rutas de administración
             │   ├── layout/
-            │   │   ├── Header.jsx
+            │   │   ├── Header.jsx   # badge "admin" junto al nombre
             │   │   ├── SiteBrand.jsx
             │   │   └── Footer.jsx
             │   └── ui/Message.jsx, Field.jsx
-            ├── context/AuthContext.jsx
+            ├── context/AuthContext.jsx  # migración de rol en localStorage caché
             ├── pages/
             │   ├── Landing.jsx
-            │   ├── Login.jsx
-            │   ├── Registro.jsx
-            │   ├── Feed.jsx
+            │   ├── Login.jsx        # redirección por rol al iniciar sesión
+            │   ├── Registro.jsx     # redirección por rol al registrarse
+            │   ├── Feed.jsx         # admin ve botón eliminar en cualquier post
             │   ├── NuevaPublicacion.jsx
-            │   └── Perfil.jsx
+            │   ├── Perfil.jsx
+            │   └── AdminDashboard.jsx   # panel de administración unificado
             ├── services/
             │   ├── api.js
-            │   ├── authService.js
+            │   ├── authService.js   # incluye listarUsuarios, cambiarRolUsuario, banearUsuario, desbanearUsuario
             │   └── publicacionService.js
             ├── constants/categorias.js
             └── styles/
-                ├── global.css
+                ├── global.css      # incluye estilos del admin dashboard (sin emojis)
                 ├── auth.css
                 ├── feed.css
                 ├── formularioPost.css
@@ -250,6 +282,10 @@ unac-forum-actualizado/
 | `nombreUsuario` | String | requerido, trim, mín. 2 |
 | `correo` | String | requerido, lowercase, regex email |
 | `contrasena` | String | requerido, mín. 6, `select: false` |
+| `rol` | String | enum `['usuario', 'admin']`, default `'usuario'` |
+| `baneado` | Boolean | default `false` |
+| `fechaBaneo` | Date | fecha del baneo |
+| `razonBaneo` | String | razón del baneo, máx. 500 caracteres |
 | `createdAt` / `updatedAt` | Date | timestamps automáticos |
 
 - Contraseñas hasheadas con **bcrypt** (10 salt rounds) en hook `pre('save')`.
@@ -294,24 +330,25 @@ Definidas en:
 `backend/services/seedService.js` ejecuta al arrancar el backend:
 
 1. **`migrarCategoriasLegacy()`** — convierte publicaciones antiguas con campo `categoria` (string) al nuevo arreglo `categorias`.
-2. **`sembrarSiVacio()`** — si las colecciones están vacías, inserta 2 usuarios demo y 3 publicaciones con varias categorías cada una.
+2. **`migrarRolesUsuarios()`** — asigna rol `'usuario'` a usuarios existentes sin el campo `rol`.
+3. **`sembrarSiVacio()`** — si faltan usuarios o publicaciones, inserta los faltantes (no duplica los existentes).
 
 ### Datos de demostración
 
-**Usuarios** (`USUARIOS_DUMMY`):
+**Usuarios** (8 en total, se agregan los faltantes al arrancar):
 
-| nombreCompleto | nombreUsuario | correo | contraseña |
-|---|---|---|---|
-| Pepito Pérez | `pepitoPerez` | `pepito.perez@estudiantes.unac.edu` | `demo123` |
-| Fulano de Tal | `ThefulanoDeTal` | `fulano.de.tal@estudiantes.unac.edu` | `demo123` |
+| nombreCompleto | nombreUsuario | correo | contraseña | rol |
+|---|---|---|---|---|
+| Administrador UNAC | `admin` | `admin@unac.edu` | `admin123` | `admin` |
+| Pepito Pérez | `pepitoPerez` | `pepito.perez@estudiantes.unac.edu` | `demo123` | `usuario` |
+| Fulano de Tal | `ThefulanoDeTal` | `fulano.de.tal@estudiantes.unac.edu` | `demo123` | `usuario` |
+| María García López | `mariaGarcia` | `maria.garcia@estudiantes.unac.edu` | `demo123` | `usuario` |
+| Carlos Ruiz Martínez | `carlosRuiz` | `carlos.ruiz@estudiantes.unac.edu` | `demo123` | `usuario` |
+| Ana Silva Castro | `anaSilva` | `ana.silva@estudiantes.unac.edu` | `demo123` | `usuario` |
+| Luis Fernández Díaz | `luisFernandez` | `luis.fernandez@estudiantes.unac.edu` | `demo123` | `usuario` |
+| Elena Morales Vega | `elenaMorales` | `elena.morales@estudiantes.unac.edu` | `demo123` | `usuario` |
 
-**Publicaciones** (`PUBLICACIONES_INICIALES`):
-
-| Título | Categorías | Autor |
-|---|---|---|
-| Club de lectura: ciencia ficción latinoamericana | `cultura`, `evento`, `socializacion` | Pepito Pérez |
-| Taller de bienestar emocional (gratuito) | `bienestar`, `alertaAcademica` | Fulano de Tal |
-| Sale parche al cerro de las 3 cruces | `socializacion`, `deportes`, `evento` | Pepito Pérez |
+**Publicaciones** (8 en total con múltiples categorías cada una).
 
 ### Operaciones útiles con `mongosh`
 
@@ -344,6 +381,15 @@ db.dropDatabase()
 | GET | `/api/auth/perfil` | ✅ Bearer | — | `{ usuario }` |
 | POST | `/api/auth/perfil` | ✅ Bearer | `{ nombreCompleto?, nombreUsuario?, correo?, contrasenaActual?, contrasenaNueva? }` | `{ usuario }` |
 
+### Administración (`/api/auth` — solo rol `admin`)
+
+| Método | Ruta | Auth | Body | Respuesta |
+|---|---|---|---|---|
+| GET | `/api/auth/usuarios` | ✅ Bearer + admin | — | `{ usuarios: [...] }` |
+| POST | `/api/auth/usuarios/:id/rol` | ✅ Bearer + admin | `{ rol: 'usuario' | 'admin' }` | `{ mensaje, usuario }` |
+| POST | `/api/auth/usuarios/:id/banear` | ✅ Bearer + admin | `{ razon: string }` | `{ mensaje, usuario }` |
+| POST | `/api/auth/usuarios/:id/desbanear` | ✅ Bearer + admin | — | `{ mensaje, usuario }` |
+
 ### Publicaciones (`/api/publicaciones`)
 
 Todas requieren `Authorization: Bearer <token>`.
@@ -365,7 +411,13 @@ Todas requieren `Authorization: Bearer <token>`.
   "id": "6a1f1edb94b30782578e961a",
   "nombreCompleto": "Pepito Pérez",
   "nombreUsuario": "pepitoPerez",
-  "correo": "pepito.perez@estudiantes.unac.edu"
+  "correo": "pepito.perez@estudiantes.unac.edu",
+  "rol": "usuario",
+  "baneado": false,
+  "fechaBaneo": null,
+  "razonBaneo": null,
+  "creadoEn": "2026-04-01T15:00:00.000Z",
+  "actualizadoEn": "2026-04-01T15:00:00.000Z"
 }
 ```
 
@@ -422,29 +474,40 @@ Authorization: Bearer <token>
 
 ### Rutas del frontend
 
-| Ruta | Página | Protegida |
-|---|---|---|
-| `/` | Landing | No |
-| `/login` | Login | No |
-| `/registro` | Registro | No |
-| `/explorar` | Feed | Sí |
-| `/nueva-publicacion` | Nueva publicación | Sí |
-| `/perfil` | Editar perfil | Sí |
-| `*` | Redirige a `/` | — |
+| Ruta | Página | Protegida | Rol |
+|---|---|---|---|
+| `/` | Landing | No | — |
+| `/login` | Login | No | — |
+| `/registro` | Registro | No | — |
+| `/explorar` | Feed | Sí | usuario |
+| `/nueva-publicacion` | Nueva publicación | Sí | usuario |
+| `/perfil` | Editar perfil | Sí | usuario |
+| `/admin` | Panel de administración | Sí | admin |
+| `*` | Redirige a `/` | — | — |
 
-### Flujo típico
+### Flujo típico por rol
 
-1. **Landing** (`/`) → el usuario pulsa «Entrar al foro» → `/login`.
+**Usuario común:**
+1. **Landing** (`/`) → «Entrar al foro» → `/login`.
 2. **Login** → `POST /api/auth/login` → JWT en `localStorage` → `/explorar`.
-3. **AuthProvider** al cargar valida el token con `GET /api/auth/perfil`.
-4. **Feed** → `GET /api/publicaciones?q=&categoria=` → tarjetas con chips multi-categoría.
-5. **Like** → `POST /api/publicaciones/:id/like` → actualiza solo esa tarjeta.
-6. **Comentario** → `POST /api/publicaciones/:id/comentarios` → panel expandido actualizado.
-7. **Nueva publicación** → checkboxes de categorías (1–5) → `POST /api/publicaciones` → `/explorar`.
-8. **Eliminar** → confirmación → `DELETE /api/publicaciones/:id` (solo autor).
-9. **Perfil** → `POST /api/auth/perfil` → refresca contexto → `/explorar`.
-10. **Logout** → limpia `localStorage` → `/login`.
-11. **401** en cualquier petición → interceptor limpia sesión → `/login`.
+3. **AuthProvider** valida el token con `GET /api/auth/perfil`.
+4. **Feed** → publicaciones, likes, comentarios, eliminar (solo propios).
+5. **Perfil** → editar datos → `/explorar`.
+
+**Administrador:**
+1. **Login** → `POST /api/auth/login` → JWT en `localStorage` → `/admin`.
+2. **Panel de administración** → `/admin` (diseño diferenciado, barra lateral).
+3. **Resumen** → estadísticas del foro.
+4. **Gestión de usuarios** → listar usuarios, cambiar rol, banear/desbanear.
+5. **Moderación de publicaciones** → ver publicaciones con comentarios, eliminar cualquiera.
+6. **Logout** → limpia `localStorage` → `/login`.
+
+### Restricciones de rol
+
+- Los **administradores** no pueden acceder a `/explorar`, `/nueva-publicacion` ni `/perfil`; son redirigidos a `/admin`.
+- Los **usuarios comunes** no pueden acceder a `/admin`; son redirigidos a `/explorar`.
+- Un administrador no puede banearse a sí mismo ni quitarse su propio rol de administrador.
+- Los usuarios baneados reciben `403` en cualquier petición API con su token.
 
 ### Almacenamiento local (`localStorage`)
 
@@ -471,41 +534,43 @@ Authorization: Bearer <token>
 | `server.js` | Entrada: `.env` → `conectarDB()` → `sembrarSiVacio()` → `listen(PORT)`. |
 | `app.js` | Express: CORS, JSON 8MB, rutas `/api/auth` y `/api/publicaciones`, 404/500. |
 | `config/database.js` | `conectarDB()` con `MONGODB_URI`. |
-| `models/Usuario.js` | Esquema usuario + bcrypt hook + `compararContrasena()`. |
+| `models/Usuario.js` | Esquema usuario + bcrypt hook + `compararContrasena()` + campos `rol`, `baneado`, `fechaBaneo`, `razonBaneo`. |
 | `models/Publicacion.js` | Esquema con `categorias[]`, comentarios, likes. Exporta `CATEGORIAS` y `MAX_CATEGORIAS_POR_PUBLICACION`. |
-| `middleware/auth.js` | `autenticar`: verifica JWT, carga `req.usuario`. |
-| `controllers/authController.js` | `registrar`, `login`, `obtenerPerfil`, `actualizarPerfil`. |
-| `controllers/publicacionController.js` | `listar`, `crear`, `toggleLike`, `eliminar`, `agregarComentario`. |
-| `routes/authRoutes.js` | Rutas de autenticación y perfil. |
+| `middleware/auth.js` | `autenticar`: verifica JWT, carga `req.usuario`, bloquea usuarios baneados. `esAdmin`: solo permite rol `admin`. |
+| `controllers/authController.js` | `registrar`, `login`, `obtenerPerfil`, `actualizarPerfil`, `listarUsuarios`, `cambiarRolUsuario`, `banearUsuario`, `desbanearUsuario`. |
+| `controllers/publicacionController.js` | `listar`, `crear`, `toggleLike`, `eliminar` (autor o admin), `agregarComentario`. |
+| `routes/authRoutes.js` | Rutas de autenticación, perfil y administración (`/usuarios`, `/usuarios/:id/rol`, `/usuarios/:id/banear`, `/usuarios/:id/desbanear`). |
 | `routes/publicacionRoutes.js` | Rutas de publicaciones (todas autenticadas). |
-| `services/seedService.js` | `migrarCategoriasLegacy()` + `sembrarSiVacio()`. |
-| `utils/seedData.js` | Usuarios y publicaciones demo con multi-categoría. |
-| `utils/serializers.js` | `usuarioPublico()`, `publicacionPublico()`, `extraerCategorias()`. |
+| `services/seedService.js` | `migrarCategoriasLegacy()`, `migrarRolesUsuarios()`, `sembrarSiVacio()`. |
+| `utils/seedData.js` | 8 usuarios demo (incluye admin) y 8 publicaciones demo con multi-categoría. |
+| `utils/serializers.js` | `usuarioPublico()` (incluye `rol`, `baneado`, fechas), `publicacionPublico()`, `extraerCategorias()`. |
 
 ### 8.3 Frontend
 
 | Archivo | Descripción |
 |---|---|
-| `FUNCIONALIDADES.md` | Las 14 funcionalidades con pre/postcondiciones para el informe. |
+| `FUNCIONALIDADES.md` | Las 18 funcionalidades con pre/postcondiciones para el informe. |
 | `main.jsx` | Entrada React: CSS globales + `<App />` en StrictMode. |
-| `app/App.jsx` | Router, AuthProvider, Toaster, rutas públicas y protegidas. |
-| `context/AuthContext.jsx` | Sesión global: login, registro, logout, refrescarUsuario. |
-| `components/auth/ProtectedRoute.jsx` | Guard de rutas → `/login` si no hay sesión. |
+| `app/App.jsx` | Router, AuthProvider, Toaster, rutas públicas, protegidas y de administración. |
+| `context/AuthContext.jsx` | Sesión global: login, registro, logout, refrescarUsuario. Migra `rol` en caché de localStorage. |
+| `components/auth/ProtectedRoute.jsx` | Guard de rutas: redirige admin a `/admin`, usuario a `/explorar`. |
+| `components/auth/AdminRoute.jsx` | Protege rutas de administración: solo rol `admin`. |
 | `components/layout/SiteBrand.jsx` | Logo UNAC + título + subtítulo (cabeceras). |
-| `components/layout/Header.jsx` | Cabecera autenticada con nav, saludo y cerrar sesión. |
+| `components/layout/Header.jsx` | Cabecera autenticada con badge "admin" junto al nombre. |
 | `components/layout/Footer.jsx` | Pie de página en vistas del foro. |
 | `components/ui/Message.jsx` | Mensajes de error/éxito en formularios. |
-| `pages/Landing.jsx` | Bienvenida pública; fondo `Fondo.png`, hero `Friends.png`, logo en header. |
-| `pages/Login.jsx` | Inicio de sesión; redirige a `/explorar` si ya hay sesión. |
-| `pages/Registro.jsx` | Alta de usuario con validación local. |
-| `pages/Feed.jsx` | Feed, búsqueda, filtro, likes, comentarios, eliminar. |
+| `pages/Landing.jsx` | Bienvenida pública; fondo `Fondo.png`, hero `Friends.png`. |
+| `pages/Login.jsx` | Inicio de sesión; redirige por rol (admin → `/admin`, usuario → `/explorar`). |
+| `pages/Registro.jsx` | Alta de usuario; redirige por rol. |
+| `pages/Feed.jsx` | Feed, búsqueda, filtro, likes, comentarios, eliminar (admin ve botón en cualquier post). |
 | `pages/NuevaPublicacion.jsx` | Formulario con grilla de checkboxes multi-categoría. |
 | `pages/Perfil.jsx` | Edición de datos personales y contraseña. |
-| `services/api.js` | Axios + interceptores JWT y manejo de 401. |
-| `services/authService.js` | Wrappers `/auth/*` con JSDoc. |
+| `pages/AdminDashboard.jsx` | Panel de administración unificado: resumen, gestión de usuarios, moderación de publicaciones con comentarios. |
+| `services/api.js` | Axios + interceptores JWT y manejo de 401/403. |
+| `services/authService.js` | Wrappers `/auth/*` (incluye `listarUsuarios`, `cambiarRolUsuario`, `banearUsuario`, `desbanearUsuario`). |
 | `services/publicacionService.js` | Wrappers `/publicaciones/*` con JSDoc. |
 | `constants/categorias.js` | Enum, etiquetas, `normalizarCategorias()`, fechas `es-CO`. |
-| `styles/*.css` | Tema oscuro, feed, auth, formularios, landing. |
+| `styles/*.css` | Tema oscuro, feed, auth, formularios, landing + estilos del admin dashboard (sin emojis). |
 
 ---
 
@@ -528,14 +593,16 @@ Authorization: Bearer <token>
 
 ### Sesión y seguridad
 
-- El JWT en `localStorage` mantiene la sesión activa hasta 30 días o hasta logout/401.
+- El JWT en `localStorage` mantiene la sesión activa hasta 30 días o hasta logout/401/403.
 - Cambiar `JWT_SECRET` en producción (`backend/.env`, no commitear).
 - Las contraseñas nunca se devuelven en las respuestas de la API.
+- Los usuarios baneados (`baneado: true`) reciben `403` en todas las peticiones API.
 
 ### Base de datos
 
 - Limpiar y re-sembrar: `mongosh` → `use unac_forum` → `db.dropDatabase()` → reiniciar backend.
-- La migración de `categoria` → `categorias` corre en cada arranque del backend.
+- La migración de `categoria` → `categorias` y la asignación de `rol` corren en cada arranque del backend.
+- Los usuarios baneados no pueden iniciar sesión ni hacer peticiones API.
 
 ### Assets visuales
 
@@ -554,7 +621,7 @@ Authorization: Bearer <token>
 - Paginación del feed.
 - Imágenes adjuntas en publicaciones.
 - Notificaciones en tiempo real (WebSockets).
-- Roles de moderador.
+- Historial de acciones de moderación.
 
 ---
 

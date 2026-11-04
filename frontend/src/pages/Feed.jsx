@@ -158,7 +158,7 @@ function PostCard({
             aria-expanded={expandido}
             aria-controls={`comentarios-${publicacion.id}`}
           >
-            <span aria-hidden="true">💬</span>
+            <span className="icon-comentarios" aria-hidden="true">C</span>
             <span>
               {publicacion.cantidadComentarios > 0
                 ? `Comentarios (${publicacion.cantidadComentarios})`
@@ -397,7 +397,7 @@ export default function Feed() {
               <PostCard
                 key={p.id}
                 publicacion={p}
-                esAutor={usuario ? p.idAutor === usuario.id : false}
+                esAutor={usuario ? p.idAutor === usuario.id || usuario.rol === 'admin' : false}
                 expandido={idExpandido === p.id}
                 onToggleExpandido={alternarExpandido}
                 onToggleLike={manejarLike}
